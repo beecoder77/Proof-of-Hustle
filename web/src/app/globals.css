@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme {
+  --color-canvas-dark: #0E1015;
+  --color-surface-card: #151821;
+  --color-surface-drawer: #1B1E2B;
+  --color-surface-popover: #232738;
+  --color-surface-subtle: #1A1D27;
+  --color-surface-hover: #222634;
+  --color-surface-active: #2B3042;
+
+  --color-border-hairline: rgba(255, 255, 255, 0.07);
+  --color-border-hover: rgba(255, 255, 255, 0.16);
+  --color-border-focus: rgba(124, 92, 252, 0.65);
+
+  --color-text-crisp: #F9FAFB;
+  --color-text-muted: #9CA3AF;
+  --color-text-subtle: #848B9B;
+
+  --color-brand-iris: #7C5CFC;
+  --color-brand-iris-hover: #9073FD;
+  --color-brand-iris-text: #A78BFA;
+
+  --color-escrow-emerald: #10B981;
+  --color-escrow-emerald-text: #34D399;
+
+  --color-hype-amber: #F59E0B;
+  --color-hype-amber-text: #FBBF24;
+
+  --color-alert-crimson: #EF4444;
+  --color-alert-crimson-text: #F87171;
+}
+
+:root {
+  --background: #0E1015;
+  --foreground: #F9FAFB;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Scrollbar - Precision Studio */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0E1015;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Text Selection */
+::selection {
+  background: rgba(124, 92, 252, 0.35);
+  color: #F9FAFB;
+}
+
+/* Form Caret */
+input, textarea {
+  caret-color: #7C5CFC;
+}
+
+/* Tabular Numerals for timers and balances */
+.tabular-numbers {
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Hype Micro-Haptic Keyframes */
+@keyframes hype-scale {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+
+@keyframes hype-ring {
+  0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.45); }
+  100% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+}
+
+.animate-hype {
+  animation: hype-scale 180ms cubic-bezier(0.34, 1.56, 0.64, 1), hype-ring 220ms ease-out;
+}
