@@ -16,10 +16,12 @@ contract SeedGigsTest is Test {
     ProofOfHustleSBT public sbt;
     ProtocolBurnPool public burnPool;
 
-    address public deployer = address(0x1234567890123456789012345678901234567890);
+    address public deployer;
+    uint256 public deployerPrivateKey;
     address public treasury = address(0x9999999999999999999999999999999999999999);
 
     function setUp() public {
+        (deployer, deployerPrivateKey) = makeAddrAndKey("seedDeployer");
         vm.startPrank(deployer);
         hustleToken = new HustleToken(deployer);
         sbt = new ProofOfHustleSBT(deployer);
@@ -56,7 +58,7 @@ contract SeedGigsTest is Test {
 
         // First Run: SeedGigsScript should seed 20 gigs
         SeedGigsScript script = new SeedGigsScript();
-        vm.setEnv("PRIVATE_KEY", "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80");
+        vm.setEnv("PRIVATE_KEY", vm.toString(deployerPrivateKey));
         script.run();
 
         assertEq(escrow.gigCount(), 20, "Must have exactly 20 gigs seeded on first run");

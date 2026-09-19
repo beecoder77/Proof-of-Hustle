@@ -30,9 +30,10 @@ contract SeedGigsScript is Script {
         if (vm.envExists("PRIVATE_KEY")) {
             deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         } else if (block.chainid == 31337) {
-            deployerPrivateKey = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+            // Local Anvil fallback only for isolated local simulation using derived test key
+            (, deployerPrivateKey) = makeAddrAndKey("localDeployer");
         } else {
-            revert("PRIVATE_KEY not found in environment.");
+            revert("PRIVATE_KEY not found in environment. Please configure .env.");
         }
 
         address deployer = vm.addr(deployerPrivateKey);
