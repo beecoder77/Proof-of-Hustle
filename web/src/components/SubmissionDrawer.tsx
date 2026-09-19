@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { GigItem } from "../types";
 import {
   X,
   Clock,
@@ -15,8 +14,12 @@ import {
   Key,
 } from "lucide-react";
 
+import { GigItem, SubmissionItem } from "../types";
+
 interface SubmissionDrawerProps {
   gig: GigItem | null;
+  submissions?: SubmissionItem[];
+  currentUserAddress?: string;
   onClose: () => void;
   onClaim: (gigId: string) => void;
   onSubmitWork: (
@@ -33,6 +36,8 @@ interface SubmissionDrawerProps {
 
 export function SubmissionDrawer({
   gig,
+  submissions = [],
+  currentUserAddress,
   onClose,
   onClaim,
   onSubmitWork,
@@ -44,6 +49,7 @@ export function SubmissionDrawer({
   const [activeTab, setActiveTab] = useState<"scope" | "submissions" | "creator">("scope");
   const [submissionUrl, setSubmissionUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copiedHash, setCopiedHash] = useState<string | null>(null);
 
   // Sync sealed payload if available
   React.useEffect(() => {
@@ -68,7 +74,14 @@ export function SubmissionDrawer({
       setIsSubmitting(false);
       setSubmissionUrl("");
       onClearSealedData?.();
+      setActiveTab("submissions");
     }, 600);
+  };
+
+  const handleCopyHash = (hash: string) => {
+    navigator.clipboard.writeText(hash);
+    setCopiedHash(hash);
+    setTimeout(() => setCopiedHash(null), 2000);
   };
 
   return (
@@ -213,7 +226,7 @@ export function SubmissionDrawer({
 
             {activeTab === "submissions" && (
               <div className="space-y-4">
-                {gig.submissionsCount === 0 ? (
+                {submissions.length === 0 ? (
                   <div className="rounded-xl border border-dashed border-white/[0.12] p-8 text-center text-xs text-[#848B9B]">
                     <p className="font-semibold text-[#F9FAFB]">No submissions yet</p>
                     <p className="mt-1">
@@ -222,29 +235,102 @@ export function SubmissionDrawer({
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="rounded-lg border border-white/[0.08] bg-[#1B1E2B] p-4 text-xs">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-[#7C5CFC]">0x7099...79C8</span>
-                        <span className="text-[#848B9B]">Submitted 3h ago</span>
-                      </div>
-                      <p className="mt-2 text-[#F9FAFB]">
-                        GitHub PR #42: Implemented parallel EVM benchmark test cases with Alchemy fallback.
-                      </p>
-                      <div className="mt-3 flex items-center justify-between pt-2 border-t border-white/[0.05]">
-                        <span className="text-emerald-400 flex items-center gap-1 font-medium">
-                          <CheckCircle className="h-3 w-3" />
-                          Code Verified
-                        </span>
-                        <a
-                          href="https://github.com"
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-center gap-1 text-[#7C5CFC] hover:underline"
+                    {submissions.map((sub) => {
+                      const isCurrentUser =
+                        currentUserAddress &&
+                        sub.hustler.toLowerCase() === currentUserAddress.toLowerCase();
+
+                      return (
+                        <div
+                          key={sub.id}
+                          className="rounded-lg border border-white/[0.08] bg-[#1B1E2B] p-4 text-xs space-y-3"
                         >
-                          View Deliverable <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </div>
-                    </div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono text-[#7C5CFC] font-semibold">
+                                {sub.hustler.slice(0, 6)}...{sub.hustler.slice(-4)}
+                              </span>
+                              {isCurrentUser && (
+                                <span className="rounded bg-[#7C5CFC]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#A78BFA] border border-[#7C5CFC]/30">
+                                  You
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[#848B9B]">
+                              {typeof sub.submittedAt === "number" && sub.submittedAt > 0
+                                ? "Just now"
+                                : "Recent"}
+                            </span>
+                          </div>
+
+                          {/* Deliverable link or description */}
+                          <div className="rounded bg-[#151821] p-2.5 border border-white/[0.05] flex items-center justify-between">
+                            <span className="font-mono text-[11px] text-[#F9FAFB] truncate max-w-[340px]">
+                              {sub.deliverableUri}
+                            </span>
+                            <a
+                              href={
+                                sub.deliverableUri.startsWith("http")
+                                  ? sub.deliverableUri
+                                  : "https://github.com"
+                              }
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center gap-1 text-[#7C5CFC] hover:underline shrink-0 ml-2"
+                            >
+                              <span>Open</span>
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+
+                          {/* MERA PRF Commit Hash if Sealed */}
+                          {sub.isSealed && sub.commitHash && (
+                            <div className="rounded bg-[#7C5CFC]/10 border border-[#7C5CFC]/20 p-2.5 space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-1 text-[11px] font-semibold text-[#A78BFA]">
+                                  <Lock className="h-3 w-3" />
+                                  MERA PRF Commit Hash (SHA-256)
+                                </span>
+                                <button
+                                  onClick={() => handleCopyHash(sub.commitHash!)}
+                                  className="text-[10px] text-[#848B9B] hover:text-white"
+                                >
+                                  {copiedHash === sub.commitHash ? "Copied" : "Copy"}
+                                </button>
+                              </div>
+                              <p className="font-mono text-[10px] text-[#9CA3AF] truncate">
+                                {sub.commitHash}
+                              </p>
+                              <div className="text-[10px] text-emerald-400 flex items-center gap-1">
+                                <CheckCircle className="h-2.5 w-2.5" />
+                                Zero-Knowledge Sealed Onchain
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Bottom Row / Actions */}
+                          <div className="flex items-center justify-between pt-2 border-t border-white/[0.05]">
+                            <span className="text-emerald-400 flex items-center gap-1 font-medium">
+                              <CheckCircle className="h-3 w-3" />
+                              {sub.isWinner
+                                ? "Awarded Winner • Payout Settled"
+                                : "Code Deliverable Submitted"}
+                            </span>
+
+                            {gig.status !== "SETTLED" && (
+                              <button
+                                onClick={() => onApprovePayout(gig.id)}
+                                className="flex items-center gap-1 rounded bg-[#10B981] px-2.5 py-1 text-xs font-semibold text-black hover:bg-[#34D399] transition-all active:scale-95 shadow-sm shadow-emerald-500/20"
+                                title="Approve this submission and release bounty"
+                              >
+                                <Award className="h-3 w-3" />
+                                <span>Approve Payout (+{gig.rewardAmount} {gig.rewardToken})</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

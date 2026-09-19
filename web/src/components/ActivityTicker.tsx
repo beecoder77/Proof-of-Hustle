@@ -3,48 +3,95 @@
 import React, { useState, useEffect } from "react";
 import { Zap, Flame, CheckCircle, ShieldCheck } from "lucide-react";
 
-const ACTIVITIES = [
+import { ActivityItem } from "../types";
+
+const DEFAULT_ACTIVITIES: {
+  icon: typeof CheckCircle;
+  color: string;
+  text: string;
+  time: string;
+  tx: string;
+}[] = [
   {
     icon: CheckCircle,
     color: "text-[#34D399]",
     text: "@dev_alex completed 'Build Multi-RPC Dashboard' — 1,250 USDT released via Escrow",
     time: "12s ago",
-    tx: "0x7a2...f88",
+    tx: "0x7a2d48b...f88",
   },
   {
     icon: Flame,
     color: "text-[#FBBF24]",
     text: "@hustler99 hyped 'Monad 3D Mascot Challenge' (+500 $HUSTLE staked)",
     time: "34s ago",
-    tx: "0x3c4...9bc",
+    tx: "0x3c4a19e...9bc",
   },
   {
     icon: Flame,
     color: "text-[#F87171]",
     text: "450 $HUSTLE permanently burned from recent escrow completions",
     time: "1m ago",
-    tx: "0x9fE...6e0",
+    tx: "0x9fE467...6e0",
   },
   {
     icon: ShieldCheck,
     color: "text-[#A78BFA]",
     text: "Verified ERC-5192 Proof-of-Work SBT #12 minted to @creative_nad",
     time: "2m ago",
-    tx: "0xCf7...0Fc",
+    tx: "0xCf7Ed3...0Fc",
   },
 ];
 
-export function ActivityTicker() {
+interface ActivityTickerProps {
+  customActivities?: ActivityItem[];
+}
+
+export function ActivityTicker({ customActivities }: ActivityTickerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Convert custom activities to ticker items if present
+  const items = React.useMemo(() => {
+    if (!customActivities || customActivities.length === 0) {
+      return DEFAULT_ACTIVITIES;
+    }
+
+    const mapped = customActivities.map((act) => {
+      let icon = Zap;
+      let color = "text-[#7C5CFC]";
+      if (act.type === "PAYOUT") {
+        icon = CheckCircle;
+        color = "text-[#34D399]";
+      } else if (act.type === "HYPE") {
+        icon = Flame;
+        color = "text-[#FBBF24]";
+      } else if (act.type === "BURN") {
+        icon = Flame;
+        color = "text-[#F87171]";
+      } else if (act.type === "CLAIM") {
+        icon = ShieldCheck;
+        color = "text-[#A78BFA]";
+      }
+
+      return {
+        icon,
+        color,
+        text: act.text,
+        time: act.timestamp,
+        tx: `${act.txHash.slice(0, 8)}...${act.txHash.slice(-4)}`,
+      };
+    });
+
+    return [...mapped, ...DEFAULT_ACTIVITIES];
+  }, [customActivities]);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % ACTIVITIES.length);
+      setCurrentIndex((prev) => (prev + 1) % items.length);
     }, 4500);
     return () => clearInterval(timer);
-  }, []);
+  }, [items.length]);
 
-  const active = ACTIVITIES[currentIndex];
+  const active = items[currentIndex % items.length];
   const Icon = active.icon;
 
   return (

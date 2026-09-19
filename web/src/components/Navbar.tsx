@@ -2,15 +2,21 @@
 
 import React from "react";
 import { usePrivy } from "@privy-io/react-auth";
-import { Plus, Zap, Shield, Flame, Wallet, LogOut } from "lucide-react";
+import { Plus, Zap, Shield, Flame, Wallet, LogOut, Coins } from "lucide-react";
 
 interface NavbarProps {
   onOpenCreateModal: () => void;
+  onOpenTokenModal?: () => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
 }
 
-export function Navbar({ onOpenCreateModal, activeTab, setActiveTab }: NavbarProps) {
+export function Navbar({
+  onOpenCreateModal,
+  onOpenTokenModal,
+  activeTab,
+  setActiveTab,
+}: NavbarProps) {
   const { ready, authenticated, user, login, logout } = usePrivy();
 
   const formattedAddress = user?.wallet?.address
@@ -88,7 +94,18 @@ export function Navbar({ onOpenCreateModal, activeTab, setActiveTab }: NavbarPro
         </div>
 
         {/* Action Controls & Wallet */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Import / Manage Tokens */}
+          <button
+            onClick={onOpenTokenModal}
+            className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-[#151821] px-3 py-2 text-xs font-semibold text-[#F9FAFB] transition-all hover:border-[#7C5CFC]/40 hover:bg-[#1B1E2B] active:scale-[0.98]"
+            title="Import $HUSTLE & USDT Tokens to Wallet"
+          >
+            <Coins className="h-4 w-4 text-[#F59E0B]" />
+            <span className="hidden sm:inline">Import Tokens</span>
+            <span className="sm:hidden">Tokens</span>
+          </button>
+
           {/* Post a Gig CTA */}
           <button
             onClick={onOpenCreateModal}
