@@ -19,8 +19,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
           theme: "dark",
           accentColor: "#7C5CFC",
           logo: "/logo.png",
+          walletChainType: "ethereum-only",
         },
-        loginMethods: ["google", "twitter", "github", "email", "wallet"],
+        loginMethods: ["wallet", "email"],
         defaultChain: monadTestnet,
         supportedChains: [monadTestnet],
         embeddedWallets: {

@@ -17,6 +17,10 @@ export const metadata: Metadata = {
   title: "ProofOfHustle — Decentralized Gig & Attention Protocol on Monad",
   description:
     "Sub-second escrow settlements, viral attention curation, and portable ERC-5192 Soulbound reputation on Monad.",
+  icons: {
+    icon: "/logo.svg",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

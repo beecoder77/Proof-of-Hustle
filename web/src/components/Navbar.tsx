@@ -26,9 +26,11 @@ export function Navbar({ onOpenCreateModal, activeTab, setActiveTab }: NavbarPro
             onClick={() => setActiveTab("explore")}
             className="flex items-center gap-3 text-left transition-opacity hover:opacity-90"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[#7C5CFC] to-[#9073FD] shadow-lg shadow-[#7C5CFC]/25">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
+            <img
+              src="/logo.svg"
+              alt="ProofOfHustle"
+              className="h-9 w-9 rounded-xl shadow-lg shadow-[#7C5CFC]/25"
+            />
             <div>
               <span className="text-base font-bold tracking-tight text-[#F9FAFB]">
                 ProofOfHustle
