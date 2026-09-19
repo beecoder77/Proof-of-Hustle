@@ -1,0 +1,75 @@
+type Gig @entity {
+  id: ID!
+  creator: String!
+  token: String!
+  rewardAmount: BigInt!
+  gigType: Int!
+  status: Int!
+  isSealed: Boolean!
+  deadline: BigInt!
+  totalHypeStaked: BigInt!
+  hustler: String
+  createdAt: BigInt!
+  submittedAt: BigInt
+  submissionsCount: Int!
+  finalRating: Int
+  metadataCid: String!
+  submissions: [Submission!]! @derivedFrom(field: "gig")
+  hypes: [HypeEvent!]! @derivedFrom(field: "gig")
+}
+
+type Submission @entity {
+  id: ID!
+  gig: Gig!
+  hustler: String!
+  submittedAt: BigInt!
+  isSealed: Boolean!
+  deliverableUri: String!
+  commitHash: String
+}
+
+type HypeEvent @entity {
+  id: ID!
+  gig: Gig!
+  curator: String!
+  amount: BigInt!
+  totalHype: BigInt!
+  timestamp: BigInt!
+  txHash: String!
+}
+
+type EarlyCurator @entity {
+  id: ID!
+  gig: Gig!
+  curator: String!
+  rank: BigInt!
+}
+
+type ProofCredential @entity {
+  id: ID!
+  tokenId: BigInt!
+  gigId: BigInt!
+  hustler: String!
+  creator: String!
+  payoutAmount: BigInt!
+  rating: Int!
+  deliverableCid: String!
+  timestamp: BigInt!
+}
+
+type BurnEvent @entity {
+  id: ID!
+  amount: BigInt!
+  totalBurnedToDate: BigInt!
+  timestamp: BigInt!
+  txHash: String!
+}
+
+type HustlerProfile @entity {
+  id: ID! # hustler wallet address
+  totalEarned: BigInt!
+  completedGigs: Int!
+  averageRating: BigDecimal!
+  currentTier: Int!
+  lastActiveTimestamp: BigInt!
+}
