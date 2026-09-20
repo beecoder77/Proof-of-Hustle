@@ -51,10 +51,10 @@ export function Navbar({
           </button>
 
           {/* Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1 text-sm font-medium">
+          <nav className="hidden lg:flex items-center gap-1 text-sm font-medium">
             <button
               onClick={() => setActiveTab("explore")}
-              className={`rounded-md px-3 py-1.5 transition-colors ${
+              className={`rounded-md px-2.5 py-1.5 transition-colors ${
                 activeTab === "explore"
                   ? "bg-white/[0.08] text-[#F9FAFB]"
                   : "text-[#9CA3AF] hover:bg-white/[0.04] hover:text-[#F9FAFB]"
@@ -64,17 +64,37 @@ export function Navbar({
             </button>
             <button
               onClick={() => setActiveTab("community")}
-              className={`rounded-md px-3 py-1.5 transition-colors ${
+              className={`rounded-md px-2.5 py-1.5 transition-colors ${
                 activeTab === "community"
                   ? "bg-white/[0.08] text-[#F9FAFB]"
                   : "text-[#9CA3AF] hover:bg-white/[0.04] hover:text-[#F9FAFB]"
               }`}
             >
-              Community Bounties
+              Bounties & Yield
+            </button>
+            <button
+              onClick={() => setActiveTab("leaderboard")}
+              className={`rounded-md px-2.5 py-1.5 transition-colors ${
+                activeTab === "leaderboard"
+                  ? "bg-white/[0.08] text-[#F9FAFB]"
+                  : "text-[#9CA3AF] hover:bg-white/[0.04] hover:text-[#F9FAFB]"
+              }`}
+            >
+              Hall of Fame
+            </button>
+            <button
+              onClick={() => setActiveTab("tribunal")}
+              className={`rounded-md px-2.5 py-1.5 transition-colors ${
+                activeTab === "tribunal"
+                  ? "bg-white/[0.08] text-[#F9FAFB]"
+                  : "text-[#9CA3AF] hover:bg-white/[0.04] hover:text-[#F9FAFB]"
+              }`}
+            >
+              Tribunal
             </button>
             <button
               onClick={() => setActiveTab("burn")}
-              className={`rounded-md px-3 py-1.5 transition-colors ${
+              className={`rounded-md px-2.5 py-1.5 transition-colors ${
                 activeTab === "burn"
                   ? "bg-white/[0.08] text-[#F9FAFB]"
                   : "text-[#9CA3AF] hover:bg-white/[0.04] hover:text-[#F9FAFB]"
@@ -83,18 +103,8 @@ export function Navbar({
               Burn Flywheel
             </button>
             <button
-              onClick={() => setActiveTab("tokenomics")}
-              className={`rounded-md px-3 py-1.5 transition-colors ${
-                activeTab === "tokenomics"
-                  ? "bg-white/[0.08] text-[#F9FAFB]"
-                  : "text-[#9CA3AF] hover:bg-white/[0.04] hover:text-[#F9FAFB]"
-              }`}
-            >
-              Tokenomics
-            </button>
-            <button
               onClick={() => setActiveTab("profile")}
-              className={`rounded-md px-3 py-1.5 transition-colors ${
+              className={`rounded-md px-2.5 py-1.5 transition-colors ${
                 activeTab === "profile"
                   ? "bg-white/[0.08] text-[#F9FAFB]"
                   : "text-[#9CA3AF] hover:bg-white/[0.04] hover:text-[#F9FAFB]"
@@ -107,15 +117,15 @@ export function Navbar({
 
         {/* Action Controls & Wallet */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Import / Manage Tokens */}
+          {/* Builder Starter Faucet */}
           <button
             onClick={onOpenTokenModal}
-            className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-[#151821] px-3 py-2 text-xs font-semibold text-[#F9FAFB] transition-all hover:border-[#7C5CFC]/40 hover:bg-[#1B1E2B] active:scale-[0.98]"
-            title="Import $HUSTLE & USDT Tokens to Wallet"
+            className="flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-300 transition-all hover:bg-amber-500/20 active:scale-[0.98]"
+            title="Claim Mock USDT, $HUSTLE & Gas Faucet"
           >
-            <Coins className="h-4 w-4 text-[#F59E0B]" />
-            <span className="hidden sm:inline">Import Tokens</span>
-            <span className="sm:hidden">Tokens</span>
+            <Coins className="h-4 w-4 text-amber-400" />
+            <span className="hidden sm:inline">Starter Faucet</span>
+            <span className="sm:hidden">Faucet</span>
           </button>
 
           {/* Post a Gig CTA */}

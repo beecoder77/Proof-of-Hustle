@@ -235,6 +235,54 @@ export async function burnHustleOnchain(amount?: string): Promise<RelayResponse>
   return callRelayApi("burnHustle", { amount });
 }
 
+/**
+ * Raise onchain dispute to community juror tribunal
+ */
+export async function raiseDisputeOnchain(
+  gigId: string,
+  reasonCid?: string
+): Promise<RelayResponse> {
+  return callRelayApi("raiseDispute", { gigId, reasonCid });
+}
+
+/**
+ * Juror cast vote on active dispute (1 = WORKER, 2 = CLIENT)
+ */
+export async function voteDisputeOnchain(
+  gigId: string,
+  vote: 1 | 2
+): Promise<RelayResponse> {
+  return callRelayApi("voteDispute", { gigId, vote });
+}
+
+/**
+ * Permissionless trigger to auto-release escrow after 72 hours of client inactivity
+ */
+export async function autoReleaseOnchain(gigId: string): Promise<RelayResponse> {
+  return callRelayApi("autoRelease", { gigId });
+}
+
+/**
+ * Claim 20% protocol fee curation yield for high-rated gigs
+ */
+export async function claimCurationRewardOnchain(gigId: string): Promise<RelayResponse> {
+  return callRelayApi("claimCurationReward", { gigId });
+}
+
+/**
+ * Unstake $HUSTLE after gig settlement or cancellation
+ */
+export async function unstakeHypeOnchain(gigId: string): Promise<RelayResponse> {
+  return callRelayApi("unstakeHype", { gigId });
+}
+
+/**
+ * Claim 500 $HUSTLE testnet tokens from faucet
+ */
+export async function claimHustleFaucetOnchain(userAddress: string): Promise<RelayResponse> {
+  return callRelayApi("faucetHustle", { to: userAddress, amount: "500" });
+}
+
 async function callRelayApi(action: string, params: any): Promise<RelayResponse> {
   try {
     const res = await fetch("/api/relay", {

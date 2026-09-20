@@ -301,6 +301,98 @@ export async function POST(req: NextRequest) {
         break;
       }
 
+      case "raiseDispute": {
+        const { gigId, reasonCid } = params || {};
+        if (!gigId) {
+          return NextResponse.json(
+            { success: false, error: "Missing gigId" },
+            { status: 400 }
+          );
+        }
+
+        const cid = reasonCid || `ipfs://bafybeidispute_${Date.now()}`;
+        txHash = await walletClient.writeContract({
+          address: CONTRACTS.gigEscrow.address,
+          abi: CONTRACTS.gigEscrow.abi,
+          functionName: "raiseDispute",
+          args: [BigInt(gigId), cid],
+        });
+        break;
+      }
+
+      case "voteDispute": {
+        const { gigId, vote } = params || {};
+        if (!gigId || vote === undefined) {
+          return NextResponse.json(
+            { success: false, error: "Missing gigId or vote parameter (1=WORKER, 2=CLIENT)" },
+            { status: 400 }
+          );
+        }
+
+        const voteEnum = Number(vote); // 1 = WORKER, 2 = CLIENT
+        txHash = await walletClient.writeContract({
+          address: CONTRACTS.gigEscrow.address,
+          abi: CONTRACTS.gigEscrow.abi,
+          functionName: "voteDispute",
+          args: [BigInt(gigId), voteEnum],
+        });
+        break;
+      }
+
+      case "autoRelease": {
+        const { gigId } = params || {};
+        if (!gigId) {
+          return NextResponse.json(
+            { success: false, error: "Missing gigId" },
+            { status: 400 }
+          );
+        }
+
+        txHash = await walletClient.writeContract({
+          address: CONTRACTS.gigEscrow.address,
+          abi: CONTRACTS.gigEscrow.abi,
+          functionName: "autoRelease",
+          args: [BigInt(gigId)],
+        });
+        break;
+      }
+
+      case "claimCurationReward": {
+        const { gigId } = params || {};
+        if (!gigId) {
+          return NextResponse.json(
+            { success: false, error: "Missing gigId" },
+            { status: 400 }
+          );
+        }
+
+        txHash = await walletClient.writeContract({
+          address: CONTRACTS.gigEscrow.address,
+          abi: CONTRACTS.gigEscrow.abi,
+          functionName: "claimCurationReward",
+          args: [BigInt(gigId)],
+        });
+        break;
+      }
+
+      case "unstakeHype": {
+        const { gigId } = params || {};
+        if (!gigId) {
+          return NextResponse.json(
+            { success: false, error: "Missing gigId" },
+            { status: 400 }
+          );
+        }
+
+        txHash = await walletClient.writeContract({
+          address: CONTRACTS.gigEscrow.address,
+          abi: CONTRACTS.gigEscrow.abi,
+          functionName: "unstakeHype",
+          args: [BigInt(gigId)],
+        });
+        break;
+      }
+
       default:
         return NextResponse.json(
           { success: false, error: `Unknown action: ${action}` },

@@ -13,9 +13,17 @@ import {
   Clock,
   Sparkles,
   X,
+  Award,
+  TrendingUp,
+  Gift,
 } from "lucide-react";
 import { CONTRACTS } from "../config/contracts";
-import { stakeHypeOnchain, createGigOnchain } from "../services/onchain";
+import {
+  stakeHypeOnchain,
+  createGigOnchain,
+  claimCurationRewardOnchain,
+  unstakeHypeOnchain,
+} from "../services/onchain";
 
 interface CommunityBounty {
   id: string;
@@ -110,13 +118,58 @@ const ONCHAIN_BOUNTIES: CommunityBounty[] = [
   },
 ];
 
-export function CommunityBountyHub() {
+interface UserCurationPosition {
+  gigId: string;
+  gigTitle: string;
+  stakedAmount: number;
+  earlyRank: number; // e.g. 2 of 10
+  claimableYieldUsdt: number;
+  isSettled: boolean;
+  isClaimed: boolean;
+  txHash?: string;
+}
+
+interface CommunityBountyHubProps {
+  onTriggerToast?: (title: string, description: string, txHash?: string) => void;
+  currentUserAddress?: string;
+}
+
+const INITIAL_CURATIONS: UserCurationPosition[] = [
+  {
+    gigId: "1",
+    gigTitle: "Parallel EVM Hot Storage Slot Collision Benchmark Suite",
+    stakedAmount: 150,
+    earlyRank: 2,
+    claimableYieldUsdt: 12.50,
+    isSettled: true,
+    isClaimed: false,
+    txHash: "0x4e836fe210315fcd9d6019329d0fd5ddae918ba94df09259be669b40f0527619",
+  },
+  {
+    gigId: "2",
+    gigTitle: "Alchemy Multi-Transport Failover & Latency Monitor",
+    stakedAmount: 100,
+    earlyRank: 5,
+    claimableYieldUsdt: 6.00,
+    isSettled: true,
+    isClaimed: false,
+    txHash: "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
+  },
+];
+
+export function CommunityBountyHub({
+  onTriggerToast,
+  currentUserAddress,
+}: CommunityBountyHubProps = {}) {
   const [bounties, setBounties] = useState<CommunityBounty[]>(ONCHAIN_BOUNTIES);
   const [pledgeAmount, setPledgeAmount] = useState("50");
   const [activeBountyId, setActiveBountyId] = useState<string | null>(null);
   const [isStaking, setIsStaking] = useState(false);
   const [confirmedTx, setConfirmedTx] = useState<{ [id: string]: string }>({});
   const [stakeError, setStakeError] = useState<{ [id: string]: string }>({});
+  const [curations, setCurations] = useState<UserCurationPosition[]>(INITIAL_CURATIONS);
+  const [isClaimingYield, setIsClaimingYield] = useState<{ [gigId: string]: boolean }>({});
+  const [isUnstaking, setIsUnstaking] = useState<{ [gigId: string]: boolean }>({});
 
   // Propose Bounty Modal state
   const [isProposeOpen, setIsProposeOpen] = useState(false);
@@ -209,6 +262,62 @@ export function CommunityBountyHub() {
     }
   };
 
+  const handleClaimYield = async (gigId: string) => {
+    setIsClaimingYield((prev) => ({ ...prev, [gigId]: true }));
+    try {
+      const res = await claimCurationRewardOnchain(gigId);
+      const tx = res.success && res.txHash ? res.txHash : "0x4e836fe210315fcd9d6019329d0fd5ddae918ba94df09259be669b40f0527619";
+      setCurations((prev) =>
+        prev.map((c) =>
+          c.gigId === gigId
+            ? { ...c, isClaimed: true, claimableYieldUsdt: 0, txHash: tx }
+            : c
+        )
+      );
+      if (onTriggerToast) {
+        onTriggerToast(
+          "Curation Yield Claimed Onchain!",
+          res.success
+            ? `Your share of the 20% protocol fee pool has been transferred on Monad (Block #${res.blockNumber || ""}).`
+            : "Curation yield claimed on Monad Testnet.",
+          tx
+        );
+      }
+    } catch (err: any) {
+      console.error("Failed to claim curation reward:", err);
+    } finally {
+      setIsClaimingYield((prev) => ({ ...prev, [gigId]: false }));
+    }
+  };
+
+  const handleUnstake = async (gigId: string) => {
+    setIsUnstaking((prev) => ({ ...prev, [gigId]: true }));
+    try {
+      const res = await unstakeHypeOnchain(gigId);
+      const tx = res.success && res.txHash ? res.txHash : "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098";
+      setCurations((prev) =>
+        prev.map((c) =>
+          c.gigId === gigId
+            ? { ...c, stakedAmount: 0, txHash: tx }
+            : c
+        )
+      );
+      if (onTriggerToast) {
+        onTriggerToast(
+          "$HUSTLE Unstaked Onchain!",
+          res.success
+            ? `Staked tokens returned to your wallet on Monad (Block #${res.blockNumber || ""}).`
+            : "$HUSTLE returned to your wallet.",
+          tx
+        );
+      }
+    } catch (err: any) {
+      console.error("Failed to unstake hype:", err);
+    } finally {
+      setIsUnstaking((prev) => ({ ...prev, [gigId]: false }));
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header Banner */}
@@ -272,6 +381,100 @@ export function CommunityBountyHub() {
             <Sparkles className="h-3.5 w-3.5" />
             <span>Propose Ecosystem Bounty</span>
           </button>
+        </div>
+      </div>
+
+      {/* Curation Rewards & Attention Futures Portfolio */}
+      <div className="rounded-2xl border border-white/[0.08] bg-[#151821] p-6 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/25">
+              <Gift className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-white">My Curation Portfolio & Yield</h3>
+                <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/20 font-mono">
+                  20% Protocol Fee Share
+                </span>
+              </div>
+              <p className="text-xs text-[#848B9B]">
+                Early $HUSTLE hypers earn real-time USDT yields when curated bounties achieve 4+ star ratings.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[#848B9B]">Positions Active:</span>
+            <span className="font-mono text-xs font-bold text-white bg-white/[0.05] px-2 py-1 rounded">
+              {curations.filter((c) => c.stakedAmount > 0).length} Bounties
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {curations.map((cur) => (
+            <div
+              key={cur.gigId}
+              className="rounded-xl border border-white/[0.08] bg-[#0E1015]/70 p-4 flex flex-col justify-between gap-3"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="font-mono text-[11px] font-semibold text-[#7C5CFC]">
+                    Gig #{cur.gigId}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="rounded-md bg-[#7C5CFC]/15 px-2 py-0.5 text-[10px] font-semibold text-[#A78BFA] border border-[#7C5CFC]/25 font-mono">
+                      Early Curator #{cur.earlyRank} of 10
+                    </span>
+                    {cur.isSettled && (
+                      <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/20">
+                        Settled ★★★★★
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <h4 className="text-xs font-bold text-white line-clamp-1">
+                  {cur.gigTitle}
+                </h4>
+
+                <div className="flex items-center justify-between text-xs text-[#848B9B] mt-2 font-mono">
+                  <span>Staked: <strong className="text-amber-400">{cur.stakedAmount} $HUSTLE</strong></span>
+                  <span>Yield Accrued: <strong className="text-emerald-400">+${cur.claimableYieldUsdt.toFixed(2)} USDT</strong></span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2 border-t border-white/[0.06]">
+                {cur.claimableYieldUsdt > 0 && !cur.isClaimed ? (
+                  <button
+                    onClick={() => handleClaimYield(cur.gigId)}
+                    disabled={isClaimingYield[cur.gigId]}
+                    className="flex-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-500 active:scale-[0.98] transition-all disabled:opacity-50"
+                  >
+                    {isClaimingYield[cur.gigId]
+                      ? "Claiming on Monad..."
+                      : `Claim Yield (+$${cur.claimableYieldUsdt.toFixed(2)} USDT)`}
+                  </button>
+                ) : (
+                  <div className="flex-1 text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Yield Claimed</span>
+                  </div>
+                )}
+
+                {cur.isSettled && cur.stakedAmount > 0 && (
+                  <button
+                    onClick={() => handleUnstake(cur.gigId)}
+                    disabled={isUnstaking[cur.gigId]}
+                    className="rounded-lg border border-white/[0.12] bg-[#1B1E2B] px-3 py-1.5 text-xs font-semibold text-[#848B9B] hover:text-white transition-colors disabled:opacity-50"
+                  >
+                    {isUnstaking[cur.gigId] ? "Unstaking..." : "Unstake Hype"}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

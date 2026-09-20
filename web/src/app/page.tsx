@@ -13,7 +13,9 @@ import { CommunityBountyHub } from "../components/CommunityBountyHub";
 import { BurnTrackerWidget } from "../components/BurnTrackerWidget";
 import { HustlerProfileView } from "../components/HustlerProfileView";
 import { ProofOfWinModal } from "../components/ProofOfWinModal";
-import { ImportTokenModal } from "../components/ImportTokenModal";
+import { BuilderStarterModal } from "../components/BuilderStarterModal";
+import { HustlerLeaderboardView } from "../components/HustlerLeaderboardView";
+import { CommunityTribunalModal } from "../components/CommunityTribunalModal";
 import { TokenomicsView } from "../components/TokenomicsView";
 import { INITIAL_GIGS } from "../data/mockGigs";
 import { GigItem, SubmissionItem, ActivityItem } from "../types";
@@ -596,7 +598,27 @@ export default function Home() {
       {/* Main Container */}
       <main className="mx-auto flex-1 w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Navigation Tab Switching */}
-        {activeNavTab === "community" && <CommunityBountyHub />}
+        {activeNavTab === "community" && (
+          <CommunityBountyHub
+            onTriggerToast={triggerTxToast}
+            currentUserAddress={currentUserAddress}
+          />
+        )}
+        {activeNavTab === "leaderboard" && (
+          <HustlerLeaderboardView
+            onOpenProfile={() => setActiveNavTab("profile")}
+          />
+        )}
+        {activeNavTab === "tribunal" && (
+          <div className="py-2">
+            <CommunityTribunalModal
+              isOpen={true}
+              onClose={() => setActiveNavTab("explore")}
+              onTriggerToast={triggerTxToast}
+              currentUserAddress={currentUserAddress}
+            />
+          </div>
+        )}
         {activeNavTab === "burn" && <BurnTrackerWidget />}
         {activeNavTab === "tokenomics" && <TokenomicsView />}
         {activeNavTab === "profile" && (
@@ -729,30 +751,12 @@ export default function Home() {
         }}
       />
 
-      {/* Protocol Tokens & 1-Click Import Modal */}
-      <ImportTokenModal
+      {/* 1-Click Builder Starter Station & Faucet Modal */}
+      <BuilderStarterModal
         isOpen={isTokenModalOpen}
         onClose={() => setIsTokenModalOpen(false)}
-        onMintTestUsdt={async () => {
-          try {
-            const res = await claimUsdtFaucetOnchain(currentUserAddress);
-            if (res.success && res.txHash) {
-              triggerTxToast(
-                "+1,000 Mock USDT Minted Onchain!",
-                `Testnet faucet funds minted on Monad Testnet (Block #${res.blockNumber || ""}).`,
-                res.txHash
-              );
-            } else {
-              triggerTxToast(
-                "Faucet Mint Error",
-                res.error || "Unable to claim testnet USDT",
-                ""
-              );
-            }
-          } catch (err: any) {
-            console.error("onMintTestUsdt failed:", err);
-          }
-        }}
+        currentUserAddress={currentUserAddress}
+        onTriggerToast={triggerTxToast}
       />
 
       {/* Proof of Win Viral Loop Celebration Modal */}
