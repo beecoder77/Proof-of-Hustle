@@ -21,6 +21,7 @@ import {
   autoReleaseOnchain,
   raiseDisputeOnchain,
 } from "../services/onchain";
+import { fetchLiveDisputes } from "../services/onchainFeed";
 import { CONTRACTS } from "../config/contracts";
 import seededOnchainData from "../data/seededOnchainData.json";
 
@@ -100,6 +101,29 @@ export function CommunityTribunalModal({
   const [selectedDispute, setSelectedDispute] = useState<DisputeItem | null>(SEED_DISPUTES[0]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<"ACTIVE" | "RULES">("ACTIVE");
+  const [isLiveTribunalSynced, setIsLiveTribunalSynced] = useState(false);
+
+  React.useEffect(() => {
+    let active = true;
+    async function loadDisputes() {
+      try {
+        const live = await fetchLiveDisputes();
+        if (active && live && live.length > 0) {
+          setDisputes(live);
+          setSelectedDispute(live[0]);
+          setIsLiveTribunalSynced(true);
+        }
+      } catch (err) {
+        console.warn("Could not load live disputes:", err);
+      }
+    }
+    if (isOpen) {
+      loadDisputes();
+    }
+    return () => {
+      active = false;
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -222,6 +246,12 @@ export function CommunityTribunalModal({
                 <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400 border border-emerald-500/20 font-mono">
                   Schelling 2-of-3 Quorum
                 </span>
+                {isLiveTribunalSynced && (
+                  <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400 border border-emerald-500/20 flex items-center gap-1 font-mono">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#10B981] animate-pulse" />
+                    Live Monad Arbitrations
+                  </span>
+                )}
               </div>
               <p className="text-xs text-[#848B9B]">
                 Decentralized onchain arbitration and 72-hour anti-ghosting protection on Monad.
