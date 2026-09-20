@@ -26,6 +26,8 @@ import {
   ExternalLink,
   X,
   Zap,
+  ShieldCheck,
+  Wallet,
 } from "lucide-react";
 import {
   fetchProfileOnchain,
@@ -68,22 +70,32 @@ const INITIAL_SUBMISSIONS: Record<string, SubmissionItem[]> = {
 };
 
 export default function Home() {
-  const { user } = usePrivy();
+  const { user, login } = usePrivy();
   const connectedAddress = user?.wallet?.address;
   const [inspectedHustlerAddress, setInspectedHustlerAddress] = useState<string | null>(null);
-  // Default to connected wallet, or fallback to community top hustler showcase (@nad_architect)
-  const defaultShowcaseAddress = "0x8fe5bB58832f4c7E955f230bbfB4bBfbdb6D20e7";
-  const currentUserAddress = connectedAddress || defaultShowcaseAddress;
+  const currentUserAddress = connectedAddress || "";
   const isConnected = !!connectedAddress;
 
   // Client Mount & Deterministic Hydration
   const [isMounted, setIsMounted] = useState(false);
-  const [currentUsername, setCurrentUsername] = useState<string>(() => {
-    return `@hustler_${currentUserAddress.slice(2, 6)}`;
-  });
+  const [currentUsername, setCurrentUsername] = useState<string>("");
   const [gigs, setGigs] = useState<GigItem[]>(INITIAL_GIGS);
   const [submissions, setSubmissions] = useState<Record<string, SubmissionItem[]>>(INITIAL_SUBMISSIONS);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
+
+  // Sync username from connected address or onchain storage
+  useEffect(() => {
+    if (!connectedAddress) {
+      setCurrentUsername("");
+      return;
+    }
+    const savedUser = localStorage.getItem(`poh_username_${connectedAddress.toLowerCase()}`);
+    if (savedUser) {
+      setCurrentUsername(savedUser);
+    } else {
+      setCurrentUsername(`@hustler_${connectedAddress.slice(2, 6)}`);
+    }
+  }, [connectedAddress]);
 
   // Modal & Drawer visibility
   const [selectedGig, setSelectedGig] = useState<GigItem | null>(null);
@@ -127,9 +139,11 @@ export default function Home() {
   useEffect(() => {
     setIsMounted(true);
     try {
-      const savedUser = localStorage.getItem(`poh_username_${currentUserAddress.toLowerCase()}`);
-      if (savedUser) {
-        setCurrentUsername(savedUser);
+      if (connectedAddress) {
+        const savedUser = localStorage.getItem(`poh_username_${connectedAddress.toLowerCase()}`);
+        if (savedUser) {
+          setCurrentUsername(savedUser);
+        }
       }
       const savedGigs = localStorage.getItem("poh_gigs_v2");
       if (savedGigs) {
@@ -146,14 +160,14 @@ export default function Home() {
     } catch (e) {
       console.error("Failed to load local storage state", e);
     }
-  }, [currentUserAddress]);
+  }, [connectedAddress]);
 
   // Save to LocalStorage ONLY after client is mounted to avoid overwriting with initial state
   useEffect(() => {
-    if (isMounted && currentUserAddress) {
-      localStorage.setItem(`poh_username_${currentUserAddress.toLowerCase()}`, currentUsername);
+    if (isMounted && connectedAddress && currentUsername) {
+      localStorage.setItem(`poh_username_${connectedAddress.toLowerCase()}`, currentUsername);
     }
-  }, [currentUsername, currentUserAddress, isMounted]);
+  }, [currentUsername, connectedAddress, isMounted]);
 
   useEffect(() => {
     if (isMounted) {
@@ -215,9 +229,9 @@ export default function Home() {
   useEffect(() => {
     let active = true;
     async function syncOnchainHandle() {
-      if (!currentUserAddress) return;
+      if (!connectedAddress) return;
       try {
-        const profile = await fetchProfileOnchain(currentUserAddress);
+        const profile = await fetchProfileOnchain(connectedAddress);
         if (profile && profile.handle && active) {
           setCurrentUsername(profile.handle);
         }
@@ -229,7 +243,7 @@ export default function Home() {
     return () => {
       active = false;
     };
-  }, [currentUserAddress]);
+  }, [connectedAddress]);
 
   const triggerTxToast = useCallback((title: string, description: string, txHash?: string) => {
     setTxToast({ show: true, title, description, txHash: txHash || "" });
@@ -295,6 +309,11 @@ export default function Home() {
   };
 
   const handleClaimTask = async (gigId: string) => {
+    if (!connectedAddress) {
+      login();
+      return;
+    }
+
     setGigs((prev) =>
       prev.map((g) => (g.id === gigId ? { ...g, status: "IN_PROGRESS" } : g))
     );
@@ -337,6 +356,11 @@ export default function Home() {
     isSealed?: boolean,
     commitHash?: string
   ) => {
+    if (!connectedAddress) {
+      login();
+      return;
+    }
+
     // 1. Create submission item
     const newSub: SubmissionItem = {
       id: `sub-${Date.now()}`,
@@ -475,6 +499,11 @@ export default function Home() {
   };
 
   const handleCreateGig = async (newGigData: Partial<GigItem>) => {
+    if (!connectedAddress) {
+      login();
+      return;
+    }
+
     const newId = (gigs.length + 1).toString();
     const created: GigItem = {
       id: newId,
@@ -642,8 +671,12 @@ export default function Home() {
               setActiveNavTab("profile");
             }}
             onOpenProfile={() => {
-              setInspectedHustlerAddress(null);
-              setActiveNavTab("profile");
+              if (!connectedAddress) {
+                login();
+              } else {
+                setInspectedHustlerAddress(null);
+                setActiveNavTab("profile");
+              }
             }}
           />
         )}
@@ -665,19 +698,49 @@ export default function Home() {
         )}
         {activeNavTab === "tokenomics" && <TokenomicsView />}
         {activeNavTab === "profile" && (
-          <HustlerProfileView
-            currentUserAddress={inspectedHustlerAddress || currentUserAddress}
-            currentUsername={inspectedHustlerAddress ? undefined : currentUsername}
-            onUpdateUsername={setCurrentUsername}
-            onTriggerToast={triggerTxToast}
-            isConnectedWallet={
-              isConnected &&
-              (!inspectedHustlerAddress ||
-                inspectedHustlerAddress.toLowerCase() === connectedAddress?.toLowerCase())
-            }
-            onResetToMyProfile={() => setInspectedHustlerAddress(null)}
-            onSelectAddressToView={(address) => setInspectedHustlerAddress(address)}
-          />
+          !connectedAddress && !inspectedHustlerAddress ? (
+            <div className="mx-auto max-w-xl py-16 text-center space-y-6">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-white/[0.08] bg-[#151821] shadow-2xl shadow-[#7C5CFC]/20">
+                <ShieldCheck className="h-10 w-10 text-[#7C5CFC]" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-black text-white tracking-tight">
+                  Connect Wallet to Access Hustler Profile
+                </h2>
+                <p className="text-xs sm:text-sm text-[#9CA3AF] max-w-md mx-auto leading-relaxed">
+                  Your Soulbound ERC-5192 reputation, verified gig proofs, onchain handle, and Monad token balances belong strictly to your private wallet.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <button
+                  onClick={login}
+                  className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#7C5CFC] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#7C5CFC]/25 transition-all hover:bg-[#9073FD] active:scale-[0.98]"
+                >
+                  <Wallet className="h-4 w-4" />
+                  <span>Connect Monad Wallet</span>
+                </button>
+                <button
+                  onClick={() => setActiveNavTab("explore")}
+                  className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-[#151821] px-5 py-3 text-sm font-semibold text-[#848B9B] hover:text-white hover:border-white/20 transition-all active:scale-[0.98]"
+                >
+                  <span>Explore Open Gigs</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <HustlerProfileView
+              currentUserAddress={inspectedHustlerAddress || connectedAddress || ""}
+              currentUsername={inspectedHustlerAddress ? undefined : currentUsername}
+              onUpdateUsername={setCurrentUsername}
+              onTriggerToast={triggerTxToast}
+              isConnectedWallet={
+                isConnected &&
+                (!inspectedHustlerAddress ||
+                  inspectedHustlerAddress.toLowerCase() === connectedAddress?.toLowerCase())
+              }
+              onResetToMyProfile={() => setInspectedHustlerAddress(null)}
+            />
+          )
         )}
 
         {activeNavTab === "explore" && (
@@ -782,6 +845,7 @@ export default function Home() {
         onOpenMeraDrawer={() => setIsMeraDrawerOpen(true)}
         sealedData={sealedSubmissionData}
         onClearSealedData={() => setSealedSubmissionData(null)}
+        onConnect={login}
         onRaiseDispute={async (gigId) => {
           try {
             const res = await raiseDisputeOnchain(gigId);

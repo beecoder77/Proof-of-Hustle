@@ -2,7 +2,7 @@
 
 import React from "react";
 import { usePrivy } from "@privy-io/react-auth";
-import { Plus, Zap, Shield, Flame, Wallet, LogOut, Coins } from "lucide-react";
+import { Plus, Zap, Shield, Flame, Wallet, LogOut, Coins, User } from "lucide-react";
 
 interface NavbarProps {
   onOpenCreateModal: () => void;
@@ -102,16 +102,21 @@ export function Navbar({
             >
               Burn Flywheel
             </button>
-            <button
-              onClick={() => setActiveTab("profile")}
-              className={`rounded-md px-2.5 py-1.5 transition-colors ${
-                activeTab === "profile"
-                  ? "bg-white/[0.08] text-[#F9FAFB]"
-                  : "text-[#9CA3AF] hover:bg-white/[0.04] hover:text-[#F9FAFB]"
-              }`}
-            >
-              Hustler Profile
-            </button>
+
+            {/* ONLY DISPLAY MY PROFILE WHEN USER IS AUTHENTICATED */}
+            {ready && authenticated && user?.wallet?.address && (
+              <button
+                onClick={() => setActiveTab("profile")}
+                className={`rounded-md px-2.5 py-1.5 transition-colors flex items-center gap-1.5 ${
+                  activeTab === "profile"
+                    ? "bg-[#7C5CFC]/20 text-[#A78BFA] border border-[#7C5CFC]/40 font-semibold"
+                    : "text-[#9CA3AF] hover:bg-white/[0.04] hover:text-[#F9FAFB]"
+                }`}
+              >
+                <User className="h-3.5 w-3.5 text-[#7C5CFC]" />
+                <span>My Profile</span>
+              </button>
+            )}
           </nav>
         </div>
 
@@ -130,7 +135,7 @@ export function Navbar({
 
           {/* Post a Gig CTA */}
           <button
-            onClick={onOpenCreateModal}
+            onClick={ready && authenticated ? onOpenCreateModal : login}
             className="flex items-center gap-1.5 rounded-lg bg-[#7C5CFC] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:bg-[#9073FD] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-[#7C5CFC]"
           >
             <Plus className="h-4 w-4" />
@@ -142,12 +147,19 @@ export function Navbar({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setActiveTab("profile")}
-                className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-[#151821] px-3 py-1.5 text-xs font-medium text-[#F9FAFB] hover:border-[#7C5CFC]/50 transition-colors"
-                title="View your Hustler Profile"
+                className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
+                  activeTab === "profile"
+                    ? "border-[#7C5CFC] bg-[#7C5CFC]/20 text-white shadow-sm shadow-[#7C5CFC]/30"
+                    : "border-white/[0.08] bg-[#151821] text-[#F9FAFB] hover:border-[#7C5CFC]/50 hover:bg-[#1B1E2B]"
+                }`}
+                title="View your personal Hustler Profile"
               >
-                <div className="h-2 w-2 rounded-full bg-[#10B981]" />
+                <div className="h-2 w-2 rounded-full bg-[#10B981] animate-pulse" />
                 <span className="tabular-numbers font-semibold text-white">
                   {currentUsername || formattedAddress}
+                </span>
+                <span className="rounded bg-[#7C5CFC]/30 px-1.5 py-0.5 text-[9px] font-bold text-[#A78BFA] uppercase tracking-wider">
+                  Profile
                 </span>
               </button>
               <button
@@ -161,10 +173,10 @@ export function Navbar({
           ) : (
             <button
               onClick={login}
-              className="flex items-center gap-2 rounded-lg border border-white/[0.12] bg-[#151821] px-3.5 py-2 text-xs font-medium text-[#F9FAFB] transition-all hover:border-white/[0.22] hover:bg-[#222634] active:scale-[0.98]"
+              className="flex items-center gap-2 rounded-lg bg-[#7C5CFC] px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-[#9073FD] active:scale-[0.98] shadow-md shadow-[#7C5CFC]/25"
             >
-              <Wallet className="h-3.5 w-3.5 text-[#7C5CFC]" />
-              <span>Connect</span>
+              <Wallet className="h-3.5 w-3.5" />
+              <span>Connect Wallet</span>
             </button>
           )}
         </div>

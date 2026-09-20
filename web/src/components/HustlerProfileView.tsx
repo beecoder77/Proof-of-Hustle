@@ -40,7 +40,6 @@ interface HustlerProfileViewProps {
   onTriggerToast?: (title: string, desc: string, txHash: string) => void;
   isConnectedWallet?: boolean;
   onResetToMyProfile?: () => void;
-  onSelectAddressToView?: (address: string) => void;
 }
 
 const ERC20_BALANCE_ABI = parseAbi([
@@ -63,15 +62,14 @@ export function HustlerProfileView({
   onTriggerToast,
   isConnectedWallet = false,
   onResetToMyProfile,
-  onSelectAddressToView,
 }: HustlerProfileViewProps) {
   // Username Editing State
   const [username, setUsername] = useState<string>(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && currentUserAddress) {
       const saved = localStorage.getItem(`poh_username_${currentUserAddress.toLowerCase()}`);
       if (saved) return saved;
     }
-    return currentUsername || `hustler_${currentUserAddress.slice(2, 6)}`;
+    return currentUsername || (currentUserAddress ? `hustler_${currentUserAddress.slice(2, 6)}` : "");
   });
   const [isOnchainVerifiedHandle, setIsOnchainVerifiedHandle] = useState<boolean>(false);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
@@ -88,37 +86,33 @@ export function HustlerProfileView({
   const [isMintingUsdt, setIsMintingUsdt] = useState(false);
   const [isClaimingHustle, setIsClaimingHustle] = useState(false);
 
-  // Dynamic Onchain Ledger History
-  const [recentTransactions, setRecentTransactions] = useState<OnchainTxRecord[]>([
-    {
-      type: "REGISTER_HANDLE",
-      label: "Onchain Handle Registered (@nad_architect)",
-      amount: "0.00 MON Gas",
-      block: "64,156,353",
-      txHash: "0xc8ee6350e62bf05866104eca1af93ecae7f051fffc7c0de32d9a42316a3a79ad",
-    },
-    {
-      type: "DEPLOY_SEED",
-      label: "Parallel EVM Storage Slot Collision Benchmark Settled",
-      amount: "+2,500 USDT",
-      block: "64,156,452",
-      txHash: "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
-    },
-    {
-      type: "MINT_SBT",
-      label: "ERC-5192 Soulbound Credential #1 Minted",
-      amount: "POH-SBT #1",
-      block: "64,156,452",
-      txHash: "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
-    },
-    {
-      type: "REGISTRY_DEPLOY",
-      label: "HustlerProfileRegistry Deployed & Initial Handle Bound",
-      amount: "0.00 MON Gas",
-      block: "64,074,121",
-      txHash: "0x1cada7517635137855f2387eb1f5523a272061445370fb913195dad588b5b0a8",
-    },
-  ]);
+  // Dynamic Onchain Ledger History per address
+  const [recentTransactions, setRecentTransactions] = useState<OnchainTxRecord[]>(() => {
+    if (typeof window !== "undefined" && currentUserAddress) {
+      const saved = localStorage.getItem(`poh_txs_${currentUserAddress.toLowerCase()}`);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {
+          return [];
+        }
+      }
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && currentUserAddress) {
+      const saved = localStorage.getItem(`poh_txs_${currentUserAddress.toLowerCase()}`);
+      if (saved) {
+        try {
+          setRecentTransactions(JSON.parse(saved));
+          return;
+        } catch {}
+      }
+    }
+    setRecentTransactions([]);
+  }, [currentUserAddress]);
 
   // Read Profile Handle directly from Monad Testnet Smart Contract
   useEffect(() => {
@@ -275,17 +269,21 @@ export function HustlerProfileView({
         onUpdateUsername?.(finalName);
         setIsEditingUsername(false);
 
-        // Prepend real onchain transaction
-        setRecentTransactions((prev) => [
-          {
-            type: "REGISTER_HANDLE",
-            label: `Onchain Handle Registered (${finalName})`,
-            amount: "0.00 MON Gas",
-            block: res.blockNumber || "Pending",
-            txHash: res.txHash!,
-          },
-          ...prev,
-        ]);
+        // Prepend real onchain transaction & persist to address ledger
+        const newRecord: OnchainTxRecord = {
+          type: "REGISTER_HANDLE",
+          label: `Onchain Handle Registered (${finalName})`,
+          amount: "0.00 MON Gas",
+          block: res.blockNumber || "Pending",
+          txHash: res.txHash!,
+        };
+        setRecentTransactions((prev) => {
+          const updated = [newRecord, ...prev];
+          if (typeof window !== "undefined" && currentUserAddress) {
+            localStorage.setItem(`poh_txs_${currentUserAddress.toLowerCase()}`, JSON.stringify(updated));
+          }
+          return updated;
+        });
 
         onTriggerToast?.(
           "Handle Registered Onchain!",
@@ -316,16 +314,20 @@ export function HustlerProfileView({
       const res = await claimUsdtFaucetOnchain(currentUserAddress);
       if (res.success && res.txHash) {
         await fetchOnchainBalances();
-        setRecentTransactions((prev) => [
-          {
-            type: "FAUCET_USDT",
-            label: "+1,000 Mock USDT Minted (Collateral Faucet)",
-            amount: "+1,000 USDT",
-            block: res.blockNumber || "Current",
-            txHash: res.txHash!,
-          },
-          ...prev,
-        ]);
+        const newRecord: OnchainTxRecord = {
+          type: "FAUCET_USDT",
+          label: "+1,000 Mock USDT Minted (Collateral Faucet)",
+          amount: "+1,000 USDT",
+          block: res.blockNumber || "Current",
+          txHash: res.txHash!,
+        };
+        setRecentTransactions((prev) => {
+          const updated = [newRecord, ...prev];
+          if (typeof window !== "undefined" && currentUserAddress) {
+            localStorage.setItem(`poh_txs_${currentUserAddress.toLowerCase()}`, JSON.stringify(updated));
+          }
+          return updated;
+        });
         onTriggerToast?.(
           "+1,000 USDT Testnet Faucet Minted",
           `Collateral minted on Monad Testnet (Block #${res.blockNumber || ""}).`,
@@ -347,16 +349,20 @@ export function HustlerProfileView({
       const res = await claimHustleAirdropOnchain(currentUserAddress);
       if (res.success && res.txHash) {
         await fetchOnchainBalances();
-        setRecentTransactions((prev) => [
-          {
-            type: "AIRDROP_HUSTLE",
-            label: "+500 $HUSTLE Attention Grant Transferred",
-            amount: "+500 $HUSTLE",
-            block: res.blockNumber || "Current",
-            txHash: res.txHash!,
-          },
-          ...prev,
-        ]);
+        const newRecord: OnchainTxRecord = {
+          type: "AIRDROP_HUSTLE",
+          label: "+500 $HUSTLE Attention Grant Transferred",
+          amount: "+500 $HUSTLE",
+          block: res.blockNumber || "Current",
+          txHash: res.txHash!,
+        };
+        setRecentTransactions((prev) => {
+          const updated = [newRecord, ...prev];
+          if (typeof window !== "undefined" && currentUserAddress) {
+            localStorage.setItem(`poh_txs_${currentUserAddress.toLowerCase()}`, JSON.stringify(updated));
+          }
+          return updated;
+        });
         onTriggerToast?.(
           "+500 $HUSTLE Attention Staking Grant",
           `Grant transferred on Monad Testnet (Block #${res.blockNumber || ""}).`,
@@ -441,7 +447,7 @@ export function HustlerProfileView({
 
   return (
     <div className="space-y-6">
-      {/* Account Mode Indicator & Showcase Switcher */}
+      {/* Account Mode Indicator */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-[#151821] p-4 text-xs shadow-lg">
         <div className="flex items-center gap-2 flex-wrap">
           {isConnectedWallet ? (
@@ -451,42 +457,23 @@ export function HustlerProfileView({
             </span>
           ) : (
             <span className="flex items-center gap-1.5 rounded-lg bg-[#7C5CFC]/15 border border-[#7C5CFC]/30 px-3 py-1 text-xs font-bold text-[#A78BFA]">
-              <Sparkles className="h-3.5 w-3.5" />
-              Public Hustler Showcase Profile
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Public Verified Hustler Profile (Read-Only)
             </span>
           )}
           <span className="text-[#848B9B] text-[11px] hidden md:inline">• Verifiable onchain reputation on Monad</span>
         </div>
 
-        {/* Quick Showcase Switcher Pills */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] uppercase font-mono text-[#848B9B]">Inspect:</span>
-          {[
-            { handle: "@nad_architect", addr: "0x8fe5bB58832f4c7E955f230bbfB4bBfbdb6D20e7", rank: "#1" },
-            { handle: "@parallel_whisperer", addr: "0xDd99eA991efBd3248150727f5e8602c85058E0B2", rank: "#2" },
-            { handle: "@solidity_samurai", addr: "0x64a71a50Fb8A1C34E69714EAab9Db9a2c54e8Ac8", rank: "#3" },
-          ].map((hustler) => (
-            <button
-              key={hustler.addr}
-              onClick={() => onSelectAddressToView?.(hustler.addr)}
-              className={`rounded-lg px-2.5 py-1 font-mono text-[10px] transition-all ${
-                currentUserAddress.toLowerCase() === hustler.addr.toLowerCase()
-                  ? "bg-[#7C5CFC] text-white font-bold shadow-md shadow-[#7C5CFC]/20"
-                  : "bg-[#1B1E2B] text-[#848B9B] hover:text-white hover:border-white/20 border border-white/[0.06]"
-              }`}
-            >
-              {hustler.handle} ({hustler.rank})
-            </button>
-          ))}
-          {onResetToMyProfile && (
-            <button
-              onClick={onResetToMyProfile}
-              className="rounded-lg bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1 font-bold text-[10px] text-emerald-400 hover:bg-emerald-500/30 transition-all active:scale-[0.98]"
-            >
-              My Profile
-            </button>
-          )}
-        </div>
+        {/* Back to My Profile Button if inspecting another profile */}
+        {!isConnectedWallet && onResetToMyProfile && (
+          <button
+            onClick={onResetToMyProfile}
+            className="flex items-center gap-1.5 rounded-xl bg-[#7C5CFC] px-3.5 py-1.5 font-bold text-xs text-white hover:bg-[#9073FD] transition-all active:scale-[0.98] shadow-md shadow-[#7C5CFC]/20"
+          >
+            <User className="h-3.5 w-3.5" />
+            <span>← Return to My Profile</span>
+          </button>
+        )}
       </div>
 
       {/* Profile Header & Custom Username Banner */}
@@ -507,17 +494,19 @@ export function HustlerProfileView({
                 <h2 className="text-xl sm:text-2xl font-extrabold text-[#F9FAFB] tracking-tight">
                   {username}
                 </h2>
-                <button
-                  onClick={() => {
-                    setTempUsername(username);
-                    setIsEditingUsername(true);
-                  }}
-                  title="Customize Username Onchain"
-                  className="flex items-center gap-1 rounded-lg border border-white/[0.1] bg-[#1B1E2B] px-2.5 py-1 text-xs text-[#848B9B] hover:text-white hover:border-[#7C5CFC] active:scale-[0.98] transition-all"
-                >
-                  <Edit3 className="h-3 w-3 text-[#7C5CFC]" />
-                  <span>Edit Handle</span>
-                </button>
+                {isConnectedWallet && (
+                  <button
+                    onClick={() => {
+                      setTempUsername(username);
+                      setIsEditingUsername(true);
+                    }}
+                    title="Customize Username Onchain"
+                    className="flex items-center gap-1 rounded-lg border border-white/[0.1] bg-[#1B1E2B] px-2.5 py-1 text-xs text-[#848B9B] hover:text-white hover:border-[#7C5CFC] active:scale-[0.98] transition-all"
+                  >
+                    <Edit3 className="h-3 w-3 text-[#7C5CFC]" />
+                    <span>Edit Handle</span>
+                  </button>
+                )}
                 {isOnchainVerifiedHandle ? (
                   <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-[#34D399] flex items-center gap-1">
                     <CheckCircle2 className="h-3 w-3" />
@@ -570,34 +559,41 @@ export function HustlerProfileView({
             </div>
           </div>
 
-          {/* Quick Faucet Actions */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
-            <button
-              onClick={handleClaimUsdtFaucet}
-              disabled={isMintingUsdt}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-[#34D399] hover:bg-emerald-500/20 active:scale-[0.98] transition-all disabled:opacity-50"
-            >
-              {isMintingUsdt ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Coins className="h-3.5 w-3.5" />
-              )}
-              <span>{isMintingUsdt ? "Minting Onchain..." : "+1,000 Mock USDT"}</span>
-            </button>
+          {/* Quick Faucet Actions — Only for Connected Wallet */}
+          {isConnectedWallet ? (
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full lg:w-auto">
+              <button
+                onClick={handleClaimUsdtFaucet}
+                disabled={isMintingUsdt}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-[#34D399] hover:bg-emerald-500/20 active:scale-[0.98] transition-all disabled:opacity-50"
+              >
+                {isMintingUsdt ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Coins className="h-3.5 w-3.5" />
+                )}
+                <span>{isMintingUsdt ? "Minting Onchain..." : "+1,000 Mock USDT"}</span>
+              </button>
 
-            <button
-              onClick={handleClaimHustleAirdrop}
-              disabled={isClaimingHustle}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-[#7C5CFC]/30 bg-[#7C5CFC]/15 px-3.5 py-2 text-xs font-semibold text-[#A78BFA] hover:bg-[#7C5CFC]/25 active:scale-[0.98] transition-all disabled:opacity-50"
-            >
-              {isClaimingHustle ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Zap className="h-3.5 w-3.5" />
-              )}
-              <span>{isClaimingHustle ? "Transferring Onchain..." : "+500 $HUSTLE Airdrop"}</span>
-            </button>
-          </div>
+              <button
+                onClick={handleClaimHustleAirdrop}
+                disabled={isClaimingHustle}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-[#7C5CFC]/30 bg-[#7C5CFC]/15 px-3.5 py-2 text-xs font-semibold text-[#A78BFA] hover:bg-[#7C5CFC]/25 active:scale-[0.98] transition-all disabled:opacity-50"
+              >
+                {isClaimingHustle ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Zap className="h-3.5 w-3.5" />
+                )}
+                <span>{isClaimingHustle ? "Transferring Onchain..." : "+500 $HUSTLE Airdrop"}</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#1B1E2B] px-3.5 py-2 text-xs text-[#848B9B]">
+              <Shield className="h-3.5 w-3.5 text-[#7C5CFC]" />
+              <span>Monad Testnet Onchain Record</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -735,36 +731,47 @@ export function HustlerProfileView({
         </div>
 
         <div className="mt-4 divide-y divide-white/[0.05]">
-          {recentTransactions.map((tx, idx) => (
-            <div key={idx} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-              <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-[#7C5CFC] border border-white/[0.08]">
-                  <ArrowUpRight className="h-4 w-4" />
-                </span>
-                <div>
-                  <span className="font-semibold text-white text-xs">{tx.label}</span>
-                  <div className="flex items-center gap-2 text-[11px] text-[#848B9B] font-mono mt-0.5">
-                    <span>Block #{tx.block}</span>
-                    <span>•</span>
-                    <span>Sub-400ms finality</span>
+          {recentTransactions.length === 0 ? (
+            <div className="py-8 text-center text-xs text-[#848B9B]">
+              <p className="font-semibold text-white">No Onchain Activity Recorded Yet for this Address</p>
+              <p className="mt-1 text-[#848B9B]">
+                {isConnectedWallet
+                  ? "Claim starter USDT collateral or register your unique handle to record verified transactions on Monad Testnet."
+                  : "This hustler has not recorded public transactions yet on Monad Testnet."}
+              </p>
+            </div>
+          ) : (
+            recentTransactions.map((tx, idx) => (
+              <div key={idx} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-[#7C5CFC] border border-white/[0.08]">
+                    <ArrowUpRight className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <span className="font-semibold text-white text-xs">{tx.label}</span>
+                    <div className="flex items-center gap-2 text-[11px] text-[#848B9B] font-mono mt-0.5">
+                      <span>Block #{tx.block}</span>
+                      <span>•</span>
+                      <span>Sub-400ms finality</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
-                <span className="font-mono font-bold text-[#34D399] text-xs">{tx.amount}</span>
-                <a
-                  href={`https://testnet.monadscan.com/tx/${tx.txHash}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-1 rounded-md border border-white/[0.08] bg-[#0E1015] px-2 py-1 text-[11px] font-mono text-[#A78BFA] hover:underline"
-                >
-                  <span>{tx.txHash.slice(0, 8)}...{tx.txHash.slice(-6)}</span>
-                  <ExternalLink className="h-2.5 w-2.5" />
-                </a>
+                <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
+                  <span className="font-mono font-bold text-[#34D399] text-xs">{tx.amount}</span>
+                  <a
+                    href={`https://testnet.monadscan.com/tx/${tx.txHash}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1 rounded-md border border-white/[0.08] bg-[#0E1015] px-2 py-1 text-[11px] font-mono text-[#A78BFA] hover:underline"
+                  >
+                    <span>{tx.txHash.slice(0, 8)}...{tx.txHash.slice(-6)}</span>
+                    <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 

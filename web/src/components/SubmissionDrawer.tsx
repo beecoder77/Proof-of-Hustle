@@ -35,6 +35,7 @@ interface SubmissionDrawerProps {
   onClearSealedData?: () => void;
   onRaiseDispute?: (gigId: string) => void;
   onAutoRelease?: (gigId: string) => void;
+  onConnect?: () => void;
 }
 
 export function SubmissionDrawer({
@@ -50,6 +51,7 @@ export function SubmissionDrawer({
   onClearSealedData,
   onRaiseDispute,
   onAutoRelease,
+  onConnect,
 }: SubmissionDrawerProps) {
   const [activeTab, setActiveTab] = useState<"scope" | "submissions" | "creator">("scope");
   const [submissionUrl, setSubmissionUrl] = useState("");
@@ -377,11 +379,11 @@ export function SubmissionDrawer({
           <div className="border-t border-white/[0.08] bg-[#151821] p-5">
             {gig.status === "OPEN" && gig.gigType === "FCFS" && (
               <button
-                onClick={() => onClaim(gig.id)}
+                onClick={() => (currentUserAddress ? onClaim(gig.id) : onConnect?.())}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#7C5CFC] py-3 text-sm font-bold text-white shadow-lg shadow-[#7C5CFC]/20 transition-all hover:bg-[#9073FD] active:scale-[0.98]"
               >
                 <Award className="h-4 w-4" />
-                <span>Claim Task & Start Sprint (FCFS)</span>
+                <span>{currentUserAddress ? "Claim Task & Start Sprint (FCFS)" : "Connect Wallet to Claim Task"}</span>
               </button>
             )}
 
@@ -390,12 +392,14 @@ export function SubmissionDrawer({
                 {gig.isSealed && onOpenMeraDrawer && (
                   <button
                     type="button"
-                    onClick={onOpenMeraDrawer}
+                    onClick={currentUserAddress ? onOpenMeraDrawer : onConnect}
                     className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#7C5CFC]/30 bg-[#7C5CFC]/10 py-2.5 text-xs font-semibold text-[#A78BFA] transition-colors hover:bg-[#7C5CFC]/20"
                   >
                     <Key className="h-4 w-4" />
                     <span>
-                      {sealedData?.commitHash
+                      {!currentUserAddress
+                        ? "Connect Wallet to Seal Deliverable"
+                        : sealedData?.commitHash
                         ? "MERA PRF Sealed • View / Re-encrypt Key"
                         : "Seal Deliverable via MERA Biometric Passkey"}
                     </span>
@@ -423,18 +427,31 @@ export function SubmissionDrawer({
                   </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="flex gap-2">
+                <form
+                  onSubmit={(e) => {
+                    if (!currentUserAddress) {
+                      e.preventDefault();
+                      onConnect?.();
+                      return;
+                    }
+                    handleSubmit(e);
+                  }}
+                  className="flex gap-2"
+                >
                   <input
                     type="text"
                     required
                     placeholder={
-                      gig.isSealed
+                      !currentUserAddress
+                        ? "Connect wallet to submit deliverable..."
+                        : gig.isSealed
                         ? "Deliverable URL or Sealed MERA Ciphertext..."
                         : "Submit deliverable (URL, GitHub PR, or IPFS CID)..."
                     }
                     value={submissionUrl}
                     onChange={(e) => setSubmissionUrl(e.target.value)}
-                    className="flex-1 rounded-xl border border-white/[0.12] bg-[#1B1E2B] px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:border-[#7C5CFC] focus:outline-none"
+                    disabled={!currentUserAddress}
+                    className="flex-1 rounded-xl border border-white/[0.12] bg-[#1B1E2B] px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:border-[#7C5CFC] focus:outline-none disabled:opacity-60"
                   />
                   <button
                     type="submit"
@@ -442,7 +459,13 @@ export function SubmissionDrawer({
                     className="flex items-center gap-1.5 rounded-xl bg-[#7C5CFC] px-4 py-2.5 text-xs font-bold text-white transition-all hover:bg-[#9073FD] active:scale-[0.98] disabled:opacity-50"
                   >
                     <Send className="h-3.5 w-3.5" />
-                    <span>{sealedData?.commitHash ? "Submit Sealed" : "Submit"}</span>
+                    <span>
+                      {!currentUserAddress
+                        ? "Connect"
+                        : sealedData?.commitHash
+                        ? "Submit Sealed"
+                        : "Submit"}
+                    </span>
                   </button>
                 </form>
               </div>
