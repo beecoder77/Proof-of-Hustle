@@ -236,20 +236,25 @@ export function HustlerLeaderboardView({
                           )}
                         </div>
 
-                        <img
-                          src={user.avatar}
-                          alt={user.handle}
-                          className="h-10 w-10 rounded-full border border-white/[0.1] object-cover shrink-0"
-                        />
+                        <div
+                          onClick={() => onSelectUser && onSelectUser(user.address)}
+                          className="flex items-center gap-3 cursor-pointer group"
+                        >
+                          <img
+                            src={user.avatar}
+                            alt={user.handle}
+                            className="h-10 w-10 rounded-full border border-white/[0.1] object-cover shrink-0 group-hover:border-[#7C5CFC] transition-colors"
+                          />
 
-                        <div>
-                          <div className="flex items-center gap-1.5 font-bold text-white text-xs">
-                            <span>{user.handle}</span>
-                            <ShieldCheck className="h-3.5 w-3.5 text-[#7C5CFC]" />
+                          <div>
+                            <div className="flex items-center gap-1.5 font-bold text-white text-xs group-hover:text-[#A78BFA] transition-colors">
+                              <span>{user.handle}</span>
+                              <ShieldCheck className="h-3.5 w-3.5 text-[#7C5CFC]" />
+                            </div>
+                            <span className="font-mono text-[10px] text-[#848B9B]">
+                              {user.address.slice(0, 6)}...{user.address.slice(-4)}
+                            </span>
                           </div>
-                          <span className="font-mono text-[10px] text-[#848B9B]">
-                            {user.address.slice(0, 6)}...{user.address.slice(-4)}
-                          </span>
                         </div>
                       </div>
                     </td>
@@ -294,6 +299,15 @@ export function HustlerLeaderboardView({
                     {/* Proof Details & Explorer Link */}
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        {onSelectUser && (
+                          <button
+                            onClick={() => onSelectUser(user.address)}
+                            className="inline-flex items-center gap-1 rounded-lg border border-[#7C5CFC]/30 bg-[#7C5CFC]/15 px-2.5 py-1.5 font-mono text-[10px] text-[#A78BFA] hover:bg-[#7C5CFC] hover:text-white transition-all active:scale-[0.98]"
+                          >
+                            <span>Profile</span>
+                            <ArrowUpRight className="h-2.5 w-2.5" />
+                          </button>
+                        )}
                         <a
                           href={`https://testnet.monadscan.com/tx/${user.recentTxHash}`}
                           target="_blank"

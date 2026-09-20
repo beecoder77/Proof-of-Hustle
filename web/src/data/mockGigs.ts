@@ -13,7 +13,7 @@ Build an open benchmark suite evaluating concurrent execution conflict rates und
 - Soulbound Credential #1 Minted to @nad_architect
 - 2,500 USDT escrow payout confirmed on Monad Testnet (Block #64156452)
 - Comprehensive Foundry fuzzing logs and gas profiles generated`,
-    creator: "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99",
+    creator: "0xE0344b50970236A94FbaF49e85c5ebC4294E0072",
     rewardAmount: "2,500",
     rewardToken: "USDT",
     gigType: "CONTEST",
@@ -40,7 +40,7 @@ Monad's 400ms block time requires sub-second transport failover. Build a client-
 - Soulbound Credential #2 Minted to @monad_vanguard
 - 1,200 USDT escrow payout confirmed on Monad Testnet (Block #64156469)
 - Active heartbeat monitor tested with 0 dropped frames`,
-    creator: "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99",
+    creator: "0xE0344b50970236A94FbaF49e85c5ebC4294E0072",
     rewardAmount: "1,200",
     rewardToken: "USDT",
     gigType: "FCFS",
@@ -67,7 +67,7 @@ Build a client library leveraging WebAuthn PRF extension to provide seamless 1-c
 - Soulbound Credential #3 Minted to @keccak_cipher
 - 1,500 USDT escrow payout confirmed on Monad Testnet (Block #64156484)
 - Web Crypto API SHA-256 commit hash verified onchain`,
-    creator: "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99",
+    creator: "0xE0344b50970236A94FbaF49e85c5ebC4294E0072",
     rewardAmount: "1,500",
     rewardToken: "USDT",
     gigType: "CONTEST",
@@ -93,7 +93,7 @@ Benchmark Monad's gas pricing on gas_limit vs gas used and storage slot warmth.
 ### Verified Delivery
 - Soulbound Credential #4 Minted to @solidity_samurai
 - 1,000 USDT escrow payout confirmed on Monad Testnet (Block #64156501)`,
-    creator: "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99",
+    creator: "0xE0344b50970236A94FbaF49e85c5ebC4294E0072",
     rewardAmount: "1,000",
     rewardToken: "USDT",
     gigType: "FCFS",
@@ -119,7 +119,7 @@ Craft an iconic collection of 15 looping 3D animated stickers featuring Monad's 
 ### Verified Delivery
 - Soulbound Credential #5 Minted to @monad_memelord
 - 800 USDT escrow payout confirmed on Monad Testnet (Block #64156518)`,
-    creator: "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99",
+    creator: "0xE0344b50970236A94FbaF49e85c5ebC4294E0072",
     rewardAmount: "800",
     rewardToken: "USDT",
     gigType: "CONTEST",
@@ -145,7 +145,7 @@ Evaluate contested deliverable benchmarks with Community Juror quorum.
 ### Verified Delivery
 - Arbitrated onchain by Jurors @evm_auditor and @parallel_hustler
 - 2-of-3 Quorum reached, resolving dispute in favor of @solidity_samurai (Block #64156536)`,
-    creator: "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99",
+    creator: "0xE0344b50970236A94FbaF49e85c5ebC4294E0072",
     rewardAmount: "1,000",
     rewardToken: "USDT",
     gigType: "CONTEST",
@@ -178,7 +178,7 @@ Build an open benchmark suite evaluating concurrent execution conflict rates und
 - GitHub PR with contracts and test cases
 - Benchmark report markdown with graphs
 - Reproducible \`forge test\` benchmark command`,
-    creator: "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99",
+    creator: "0xE0344b50970236A94FbaF49e85c5ebC4294E0072",
     rewardAmount: "2,500",
     rewardToken: "USDT",
     gigType: "CONTEST",
@@ -355,7 +355,7 @@ Build a lightweight Telegram WebApp (TWA) connecting to ProofOfHustle. Freelance
       "Real-time visual telemetry dashboard visualizing pipelined consensus, tail block intervals, and execution finality metrics.",
     description: `### Objective
 Develop a real-time analytics visualizer observing Monad BFT leader rotation and asynchronous execution pipelines with smooth 60fps animations and WebSocket telemetry.`,
-    creator: "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99",
+    creator: "0xE0344b50970236A94FbaF49e85c5ebC4294E0072",
     rewardAmount: "1,100",
     rewardToken: "USDT",
     gigType: "FCFS",
@@ -515,7 +515,7 @@ Produce a rigorous technical paper and simulation engine exploring how backrunni
       "Kleros-style community juror staking mechanism to arbitrate contested deliverable rejections with Schelling point incentives.",
     description: `### Objective
 Build the governance arbitration contract for ProofOfHustle where staked $HUSTLE token holders are pseudo-randomly selected as jurors to vote on disputed milestone deliverable claims.`,
-    creator: "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99",
+    creator: "0xE0344b50970236A94FbaF49e85c5ebC4294E0072",
     rewardAmount: "1,350",
     rewardToken: "USDT",
     gigType: "FCFS",

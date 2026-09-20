@@ -69,8 +69,12 @@ const INITIAL_SUBMISSIONS: Record<string, SubmissionItem[]> = {
 
 export default function Home() {
   const { user } = usePrivy();
-  const currentUserAddress =
-    user?.wallet?.address || "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99";
+  const connectedAddress = user?.wallet?.address;
+  const [inspectedHustlerAddress, setInspectedHustlerAddress] = useState<string | null>(null);
+  // Default to connected wallet, or fallback to community top hustler showcase (@nad_architect)
+  const defaultShowcaseAddress = "0x8fe5bB58832f4c7E955f230bbfB4bBfbdb6D20e7";
+  const currentUserAddress = connectedAddress || defaultShowcaseAddress;
+  const isConnected = !!connectedAddress;
 
   // Client Mount & Deterministic Hydration
   const [isMounted, setIsMounted] = useState(false);
@@ -633,7 +637,14 @@ export default function Home() {
         )}
         {activeNavTab === "leaderboard" && (
           <HustlerLeaderboardView
-            onOpenProfile={() => setActiveNavTab("profile")}
+            onSelectUser={(address) => {
+              setInspectedHustlerAddress(address);
+              setActiveNavTab("profile");
+            }}
+            onOpenProfile={() => {
+              setInspectedHustlerAddress(null);
+              setActiveNavTab("profile");
+            }}
           />
         )}
         {activeNavTab === "tribunal" && (
@@ -650,10 +661,17 @@ export default function Home() {
         {activeNavTab === "tokenomics" && <TokenomicsView />}
         {activeNavTab === "profile" && (
           <HustlerProfileView
-            currentUserAddress={currentUserAddress}
-            currentUsername={currentUsername}
+            currentUserAddress={inspectedHustlerAddress || currentUserAddress}
+            currentUsername={inspectedHustlerAddress ? undefined : currentUsername}
             onUpdateUsername={setCurrentUsername}
             onTriggerToast={triggerTxToast}
+            isConnectedWallet={
+              isConnected &&
+              (!inspectedHustlerAddress ||
+                inspectedHustlerAddress.toLowerCase() === connectedAddress?.toLowerCase())
+            }
+            onResetToMyProfile={() => setInspectedHustlerAddress(null)}
+            onSelectAddressToView={(address) => setInspectedHustlerAddress(address)}
           />
         )}
 

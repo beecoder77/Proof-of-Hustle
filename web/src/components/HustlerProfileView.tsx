@@ -21,6 +21,7 @@ import {
   Shield,
   User,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import { CONTRACTS } from "../config/contracts";
 import { encodeFunctionData, parseAbi } from "viem";
@@ -37,6 +38,9 @@ interface HustlerProfileViewProps {
   currentUsername?: string;
   onUpdateUsername?: (newUsername: string) => void;
   onTriggerToast?: (title: string, desc: string, txHash: string) => void;
+  isConnectedWallet?: boolean;
+  onResetToMyProfile?: () => void;
+  onSelectAddressToView?: (address: string) => void;
 }
 
 const ERC20_BALANCE_ABI = parseAbi([
@@ -57,6 +61,9 @@ export function HustlerProfileView({
   currentUsername,
   onUpdateUsername,
   onTriggerToast,
+  isConnectedWallet = false,
+  onResetToMyProfile,
+  onSelectAddressToView,
 }: HustlerProfileViewProps) {
   // Username Editing State
   const [username, setUsername] = useState<string>(() => {
@@ -434,6 +441,54 @@ export function HustlerProfileView({
 
   return (
     <div className="space-y-6">
+      {/* Account Mode Indicator & Showcase Switcher */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-[#151821] p-4 text-xs shadow-lg">
+        <div className="flex items-center gap-2 flex-wrap">
+          {isConnectedWallet ? (
+            <span className="flex items-center gap-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 text-xs font-bold text-emerald-400">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              Connected Wallet (Your Personal Profile)
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 rounded-lg bg-[#7C5CFC]/15 border border-[#7C5CFC]/30 px-3 py-1 text-xs font-bold text-[#A78BFA]">
+              <Sparkles className="h-3.5 w-3.5" />
+              Public Hustler Showcase Profile
+            </span>
+          )}
+          <span className="text-[#848B9B] text-[11px] hidden md:inline">• Verifiable onchain reputation on Monad</span>
+        </div>
+
+        {/* Quick Showcase Switcher Pills */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[10px] uppercase font-mono text-[#848B9B]">Inspect:</span>
+          {[
+            { handle: "@nad_architect", addr: "0x8fe5bB58832f4c7E955f230bbfB4bBfbdb6D20e7", rank: "#1" },
+            { handle: "@parallel_whisperer", addr: "0xDd99eA991efBd3248150727f5e8602c85058E0B2", rank: "#2" },
+            { handle: "@solidity_samurai", addr: "0x64a71a50Fb8A1C34E69714EAab9Db9a2c54e8Ac8", rank: "#3" },
+          ].map((hustler) => (
+            <button
+              key={hustler.addr}
+              onClick={() => onSelectAddressToView?.(hustler.addr)}
+              className={`rounded-lg px-2.5 py-1 font-mono text-[10px] transition-all ${
+                currentUserAddress.toLowerCase() === hustler.addr.toLowerCase()
+                  ? "bg-[#7C5CFC] text-white font-bold shadow-md shadow-[#7C5CFC]/20"
+                  : "bg-[#1B1E2B] text-[#848B9B] hover:text-white hover:border-white/20 border border-white/[0.06]"
+              }`}
+            >
+              {hustler.handle} ({hustler.rank})
+            </button>
+          ))}
+          {onResetToMyProfile && (
+            <button
+              onClick={onResetToMyProfile}
+              className="rounded-lg bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1 font-bold text-[10px] text-emerald-400 hover:bg-emerald-500/30 transition-all active:scale-[0.98]"
+            >
+              My Profile
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Profile Header & Custom Username Banner */}
       <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#151821] p-6 sm:p-8 shadow-xl">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
@@ -567,9 +622,7 @@ export function HustlerProfileView({
             {hustleBalance}
           </span>
           <p className="mt-1 text-[11px] text-[#9CA3AF]">
-            {currentUserAddress.toLowerCase() === "0x7a2e35cd6293b3d49f50f5e07f0aaf352127fa99"
-              ? "⚡️ Genesis Deployer Allocation (20M Initial Supply)"
-              : "Used for Attention Futures Hype staking & protocol burns"}
+            Used for Attention Futures Hype staking & protocol deflationary burns
           </p>
         </div>
 

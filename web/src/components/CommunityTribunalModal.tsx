@@ -56,7 +56,7 @@ const SEED_DISPUTES: DisputeItem[] = [
     id: "disp-28",
     gigId: "28",
     gigTitle: seededOnchainData.disputes[0]?.title || "EVM Storage Collision Verification Dispute",
-    creator: "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99",
+    creator: "0xE0344b50970236A94FbaF49e85c5ebC4294E0072",
     worker: "0x64a71a50Fb8A1C34E69714EAab9Db9a2c54e8Ac8", // @solidity_samurai
     amount: "1,000",
     token: "USDT",
@@ -75,7 +75,7 @@ const SEED_DISPUTES: DisputeItem[] = [
     id: "disp-29",
     gigId: "29",
     gigTitle: "Alchemy Multi-Transport Failover & Latency Monitor",
-    creator: "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99",
+    creator: "0xE0344b50970236A94FbaF49e85c5ebC4294E0072",
     worker: "0xDd99eA991efBd3248150727f5e8602c85058E0B2", // @monad_vanguard
     amount: "1,200",
     token: "USDT",
