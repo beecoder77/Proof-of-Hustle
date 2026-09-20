@@ -657,7 +657,12 @@ export default function Home() {
             />
           </div>
         )}
-        {activeNavTab === "burn" && <BurnTrackerWidget />}
+        {activeNavTab === "burn" && (
+          <BurnTrackerWidget
+            currentUserAddress={connectedAddress}
+            onTriggerToast={triggerTxToast}
+          />
+        )}
         {activeNavTab === "tokenomics" && <TokenomicsView />}
         {activeNavTab === "profile" && (
           <HustlerProfileView
