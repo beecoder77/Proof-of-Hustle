@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=./node_modules/envio/evm.schema.json
 name: proof-of-hustle-indexer
 description: Real-time event indexer for ProofOfHustle protocol on Monad Testnet
+handlers: src/handlers
 
 field_selection:
   transaction_fields:
@@ -33,11 +34,8 @@ chains:
       - url: https://testnet-rpc.monad.xyz
     contracts:
       - name: GigEscrow
-        address:
-          - "0x9ebE2bd656F9d4C158dE698284329a5F2994Beb5"
+        address: "0x9ebE2bd656F9d4C158dE698284329a5F2994Beb5"
       - name: ProofOfHustleSBT
-        address:
-          - "0xf84666CbA55368E8F2bE2134e20AFc89027f33b2"
+        address: "0xf84666CbA55368E8F2bE2134e20AFc89027f33b2"
       - name: ProtocolBurnPool
-        address:
-          - "0xef73DfFdD7795CFe57839f7493D452cf534B506c"
+        address: "0xef73DfFdD7795CFe57839f7493D452cf534B506c"
