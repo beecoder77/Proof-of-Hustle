@@ -65,9 +65,24 @@ export function BurnTrackerWidget() {
 
         <div className="mt-4 divide-y divide-white/[0.05]">
           {[
-            { amount: "1,200", gig: "Port OpenZeppelin Governor (#3)", time: "18m ago", tx: "0x9fe4...6e0" },
-            { amount: "450", gig: "Monad Metropolis Community Edit (#5)", time: "2h ago", tx: "0x3bc1...a12" },
-            { amount: "2,500", gig: "Weekly Escrow Fee Batch Sweep", time: "1d ago", tx: "0x8fa1...d45" },
+            {
+              amount: "1,200",
+              gig: "Port OpenZeppelin Governor (#3)",
+              time: "18m ago",
+              tx: "0x1dda7be805b72c51de0975c2997eb5ad1a709b5226064d5d6f1c89c85c6a24ce",
+            },
+            {
+              amount: "450",
+              gig: "Monad Metropolis Community Edit (#5)",
+              time: "2h ago",
+              tx: "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
+            },
+            {
+              amount: "2,500",
+              gig: "Weekly Escrow Fee Batch Sweep",
+              time: "1d ago",
+              tx: "0x26d5bbd83d5188ecbb9660be9a70b07db8008c34620a7c87f04930c22983322e",
+            },
           ].map((item, idx) => (
             <div key={idx} className="flex items-center justify-between py-3 text-xs">
               <div className="flex items-center gap-3">
@@ -88,7 +103,9 @@ export function BurnTrackerWidget() {
                   rel="noreferrer"
                   className="flex items-center gap-1 text-[#7C5CFC] hover:underline"
                 >
-                  <span className="font-mono">{item.tx}</span>
+                  <span className="font-mono">
+                    {item.tx.slice(0, 8)}...{item.tx.slice(-4)}
+                  </span>
                   <ExternalLink className="h-3 w-3" />
                 </a>
               </div>

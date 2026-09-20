@@ -19,7 +19,7 @@ import { usePrivy } from "@privy-io/react-auth";
 interface ImportTokenModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onMintTestUsdt?: () => void;
+  onMintTestUsdt?: () => Promise<void> | void;
 }
 
 export function ImportTokenModal({
@@ -79,14 +79,19 @@ export function ImportTokenModal({
     setTimeout(() => setWatchAssetStatus(null), 3500);
   };
 
-  const handleFaucetMint = () => {
+  const handleFaucetMint = async () => {
     setIsMinting(true);
-    setTimeout(() => {
-      setIsMinting(false);
+    try {
+      if (onMintTestUsdt) {
+        await onMintTestUsdt();
+      }
       setMintSuccess(true);
-      onMintTestUsdt?.();
       setTimeout(() => setMintSuccess(false), 3000);
-    }, 800);
+    } catch (err) {
+      console.error("Faucet mint error:", err);
+    } finally {
+      setIsMinting(false);
+    }
   };
 
   const tokens = [

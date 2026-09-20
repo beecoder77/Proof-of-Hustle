@@ -181,6 +181,21 @@ export async function claimHustleAirdropOnchain(
   return callRelayApi("faucetHustle", { to: toAddress });
 }
 
+/**
+ * Post a new gig with escrow locked on Monad Testnet
+ */
+export async function createGigOnchain(
+  rewardAmount: string,
+  gigType: string,
+  isSealed: boolean
+): Promise<RelayResponse> {
+  return callRelayApi("createGig", {
+    rewardAmount,
+    gigType,
+    isSealed,
+  });
+}
+
 async function callRelayApi(action: string, params: any): Promise<RelayResponse> {
   try {
     const res = await fetch("/api/relay", {

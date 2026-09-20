@@ -83,6 +83,13 @@ export function HustlerProfileView({
   // Dynamic Onchain Ledger History
   const [recentTransactions, setRecentTransactions] = useState<OnchainTxRecord[]>([
     {
+      type: "REGISTER_HANDLE",
+      label: "Onchain Handle Registered (@monad_titan)",
+      amount: "0.00 MON Gas",
+      block: "64,077,485",
+      txHash: "0xf1487e9ebb6adcbe6ff0354cc0addffc0b1b753505ddcb2eeac79a464feab52e",
+    },
+    {
       type: "DEPLOY_SEED",
       label: "Genesis Protocol Escrow & 20 Ecosystem Bounties Seeded",
       amount: "+20,000,000 $HUSTLE",

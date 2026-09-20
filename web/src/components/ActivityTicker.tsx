@@ -17,28 +17,28 @@ const DEFAULT_ACTIVITIES: {
     color: "text-[#34D399]",
     text: "@dev_alex completed 'Build Multi-RPC Dashboard' — 1,250 USDT released via Escrow",
     time: "12s ago",
-    tx: "0x7a2d48b...f88",
+    tx: "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
   },
   {
     icon: Flame,
     color: "text-[#FBBF24]",
     text: "@hustler99 hyped 'Monad 3D Mascot Challenge' (+500 $HUSTLE staked)",
     time: "34s ago",
-    tx: "0x3c4a19e...9bc",
+    tx: "0x9fac6c20e63e1c289fb668bd56e46b07c58b293625ea86e79fd6fe463340de6c",
   },
   {
     icon: Flame,
     color: "text-[#F87171]",
     text: "450 $HUSTLE permanently burned from recent escrow completions",
     time: "1m ago",
-    tx: "0x9fE467...6e0",
+    tx: "0x1dda7be805b72c51de0975c2997eb5ad1a709b5226064d5d6f1c89c85c6a24ce",
   },
   {
     icon: ShieldCheck,
     color: "text-[#A78BFA]",
     text: "Verified ERC-5192 Proof-of-Work SBT #12 minted to @creative_nad",
     time: "2m ago",
-    tx: "0xCf7Ed3...0Fc",
+    tx: "0xd4e6449a95a04a7b31b3f6bdc8e397d0f12d0114f47cb6f38f5fb096e6ce1b67",
   },
 ];
 
@@ -77,7 +77,7 @@ export function ActivityTicker({ customActivities }: ActivityTickerProps) {
         color,
         text: act.text,
         time: act.timestamp,
-        tx: `${act.txHash.slice(0, 8)}...${act.txHash.slice(-4)}`,
+        tx: act.txHash,
       };
     });
 
@@ -114,9 +114,11 @@ export function ActivityTicker({ customActivities }: ActivityTickerProps) {
             href={`https://testnet.monadscan.com/tx/${active.tx}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-[#7C5CFC] underline decoration-white/20"
+            className="hover:text-[#7C5CFC] underline decoration-white/20 font-mono"
           >
-            {active.tx}
+            {active.tx.length > 16
+              ? `${active.tx.slice(0, 8)}...${active.tx.slice(-4)}`
+              : active.tx}
           </a>
         </div>
       </div>

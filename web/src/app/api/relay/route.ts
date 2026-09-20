@@ -225,6 +225,49 @@ export async function POST(req: NextRequest) {
         break;
       }
 
+      case "createGig": {
+        const { rewardAmount, gigType, isSealed } = params || {};
+        const cleanAmount = (rewardAmount || "500").toString().replace(/,/g, "");
+        const amount = parseUnits(cleanAmount, 18);
+
+        // Check allowance of Mock USDT to GigEscrow
+        const allowance = (await publicClient.readContract({
+          address: CONTRACTS.mockUsdt.address,
+          abi: CONTRACTS.mockUsdt.abi,
+          functionName: "allowance",
+          args: [account.address, CONTRACTS.gigEscrow.address],
+        })) as bigint;
+
+        if (allowance < amount) {
+          const approveTx = await walletClient.writeContract({
+            address: CONTRACTS.mockUsdt.address,
+            abi: CONTRACTS.mockUsdt.abi,
+            functionName: "approve",
+            args: [CONTRACTS.gigEscrow.address, maxUint256],
+          });
+          await publicClient.waitForTransactionReceipt({ hash: approveTx });
+        }
+
+        const deadline = BigInt(Math.floor(Date.now() / 1000) + 7 * 86400);
+        const gType = gigType === "FCFS" ? 0 : 1;
+        const metadataCid = `ipfs://bafybeipoh_${Date.now()}`;
+
+        txHash = await walletClient.writeContract({
+          address: CONTRACTS.gigEscrow.address,
+          abi: CONTRACTS.gigEscrow.abi,
+          functionName: "createGig",
+          args: [
+            CONTRACTS.mockUsdt.address,
+            amount,
+            gType,
+            !!isSealed,
+            Number(deadline),
+            metadataCid,
+          ],
+        });
+        break;
+      }
+
       default:
         return NextResponse.json(
           { success: false, error: `Unknown action: ${action}` },

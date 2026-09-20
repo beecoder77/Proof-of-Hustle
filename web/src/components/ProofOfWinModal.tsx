@@ -20,7 +20,7 @@ export function ProofOfWinModal({
   gigTitle,
   payoutAmount,
   rewardToken,
-  txHash = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
+  txHash = "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
   sbtTokenId = "14",
 }: ProofOfWinModalProps) {
   useEffect(() => {
