@@ -2,6 +2,7 @@
   "name": "proof-of-hustle-indexer",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "HyperIndex real-time event indexer on Monad for ProofOfHustle",
   "scripts": {
     "codegen": "envio codegen",

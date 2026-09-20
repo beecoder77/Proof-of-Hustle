@@ -8,7 +8,6 @@ field_selection:
 
 contracts:
   - name: GigEscrow
-    handler: src/EventHandlers.ts
     events:
       - event: "GigCreated(uint256 indexed gigId, address indexed creator, address indexed token, uint256 rewardAmount, uint8 gigType, bool isSealed, uint256 deadline, string metadataCid)"
       - event: "TaskClaimed(uint256 indexed gigId, address indexed hustler)"
@@ -21,11 +20,9 @@ contracts:
       - event: "DisputeRaised(uint256 indexed gigId, address indexed initiator, string reasonCid)"
       - event: "DisputeResolved(uint256 indexed gigId, address indexed winner, uint256 payout)"
   - name: ProofOfHustleSBT
-    handler: src/EventHandlers.ts
     events:
       - event: "ProofMinted(uint256 indexed tokenId, uint256 indexed gigId, address indexed hustler, address creator, uint256 payoutAmount, uint8 rating, string deliverableCid)"
   - name: ProtocolBurnPool
-    handler: src/EventHandlers.ts
     events:
       - event: "TokensBurned(uint256 amount, uint256 totalBurnedToDate, uint256 timestamp)"
 
