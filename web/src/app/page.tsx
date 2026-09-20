@@ -35,6 +35,8 @@ import {
   approvePayoutOnchain,
   claimUsdtFaucetOnchain,
   createGigOnchain,
+  raiseDisputeOnchain,
+  autoReleaseOnchain,
 } from "../services/onchain";
 
 // Initial seed submissions for realism
@@ -732,6 +734,37 @@ export default function Home() {
         onOpenMeraDrawer={() => setIsMeraDrawerOpen(true)}
         sealedData={sealedSubmissionData}
         onClearSealedData={() => setSealedSubmissionData(null)}
+        onRaiseDispute={async (gigId) => {
+          try {
+            const res = await raiseDisputeOnchain(gigId);
+            triggerTxToast(
+              "Dispute Raised Onchain!",
+              res.success
+                ? `Transferred to Community Tribunal for Schelling point juror voting (Block #${res.blockNumber || ""}).`
+                : "Dispute recorded on Monad Testnet.",
+              res.txHash
+            );
+            setActiveNavTab("tribunal");
+            setSelectedGig(null);
+          } catch (e: any) {
+            console.error("Raise dispute error", e);
+          }
+        }}
+        onAutoRelease={async (gigId) => {
+          try {
+            const res = await autoReleaseOnchain(gigId);
+            triggerTxToast(
+              "Escrow Auto-Released Onchain!",
+              res.success
+                ? `72-hour anti-ghosting clock expired. 100% payout released with 5-star SBT (Block #${res.blockNumber || ""}).`
+                : "Auto-release executed on Monad Testnet.",
+              res.txHash
+            );
+            setSelectedGig(null);
+          } catch (e: any) {
+            console.error("Auto-release error", e);
+          }
+        }}
       />
 
       {/* 3-Step Create Gig Modal */}

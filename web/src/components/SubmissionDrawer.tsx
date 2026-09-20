@@ -12,6 +12,7 @@ import {
   Send,
   Award,
   Key,
+  Scale,
 } from "lucide-react";
 
 import { GigItem, SubmissionItem } from "../types";
@@ -32,6 +33,8 @@ interface SubmissionDrawerProps {
   onOpenMeraDrawer?: () => void;
   sealedData?: { commitHash: string; encryptedUri: string } | null;
   onClearSealedData?: () => void;
+  onRaiseDispute?: (gigId: string) => void;
+  onAutoRelease?: (gigId: string) => void;
 }
 
 export function SubmissionDrawer({
@@ -45,6 +48,8 @@ export function SubmissionDrawer({
   onOpenMeraDrawer,
   sealedData,
   onClearSealedData,
+  onRaiseDispute,
+  onAutoRelease,
 }: SubmissionDrawerProps) {
   const [activeTab, setActiveTab] = useState<"scope" | "submissions" | "creator">("scope");
   const [submissionUrl, setSubmissionUrl] = useState("");
@@ -444,13 +449,40 @@ export function SubmissionDrawer({
             )}
 
             {gig.status === "IN_REVIEW" && (
-              <button
-                onClick={() => onApprovePayout(gig.id)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#10B981] py-3 text-sm font-bold text-white shadow-lg shadow-[#10B981]/20 transition-all hover:bg-[#059669] active:scale-[0.98]"
-              >
-                <CheckCircle className="h-4 w-4" />
-                <span>Approve Deliverables & Release Payout (Sub-Second)</span>
-              </button>
+              <div className="space-y-2.5">
+                <button
+                  onClick={() => onApprovePayout(gig.id)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#10B981] py-3 text-sm font-bold text-white shadow-lg shadow-[#10B981]/20 transition-all hover:bg-[#059669] active:scale-[0.98]"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  <span>Approve Deliverables & Release Payout (Sub-Second)</span>
+                </button>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  {onAutoRelease && (
+                    <button
+                      type="button"
+                      onClick={() => onAutoRelease(gig.id)}
+                      className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 py-2 px-3 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 active:scale-[0.98] transition-all"
+                      title="Trigger 72h anti-ghosting payout"
+                    >
+                      <Clock className="h-3.5 w-3.5 text-amber-400" />
+                      <span>72h Auto-Release</span>
+                    </button>
+                  )}
+                  {onRaiseDispute && (
+                    <button
+                      type="button"
+                      onClick={() => onRaiseDispute(gig.id)}
+                      className="flex items-center justify-center gap-1.5 rounded-xl border border-red-500/30 bg-red-500/10 py-2 px-3 text-xs font-semibold text-red-400 hover:bg-red-500/20 active:scale-[0.98] transition-all"
+                      title="Escalate to Community Tribunal"
+                    >
+                      <Scale className="h-3.5 w-3.5 text-red-400" />
+                      <span>Raise Dispute</span>
+                    </button>
+                  )}
+                </div>
+              </div>
             )}
 
             {gig.status === "SETTLED" && (
