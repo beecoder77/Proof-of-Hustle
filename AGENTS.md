@@ -37,10 +37,25 @@
 - Real private keys, mnemonic phrases, and production secrets must **NEVER** be committed to Git.
 - The `.gitignore` must strictly ignore all `.env` files. Only sanitized `.env.example` templates with clear documentation may be tracked.
 
+## 3. Mandatory `monskills` for All Smart Contract Operations
+
+> **CRITICAL DIRECTIVE**: Every modification, new contract development, deployment, gas tuning, or integration involving smart contracts (`contracts/`) **MUST strictly consult and adhere to the `monskills` suite** (`.agents/skills/monskill/SKILL.md`).
+
+1. **Addresses & Dependencies (`addresses/SKILL.md`)**:
+   - **Never hallucinate smart contract addresses**. All addresses for protocols, canonical tokens, and factories (e.g. CreateX `0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed`) must be strictly checked and verified onchain on Monad.
+2. **Gas Optimization & Pricing (`gas/SKILL.md`)**:
+   - Monad charges transaction fees on **`gas_limit`**, NOT `gas used`. Over-allocating gas limits directly burns user funds.
+   - Cold storage access is 3–4x more expensive, and precompiles are 2–5x more expensive. Code contracts to minimize storage collisions for Monad's parallel EVM execution scheduler.
+3. **Architecture & Parallel Execution (`concepts/SKILL.md`)**:
+   - Understand Monad's async execution, block states, reserve balances, and 400ms block cadence. Avoid state access patterns that induce repeated abort-retry cycles.
+4. **Scaffolding, Deployment & Verification (`scaffold/SKILL.md` & `wallet/SKILL.md`)**:
+   - Maintain Foundry rigor (`forge test -vvv`, `forge build`). All unit tests must pass 100%.
+   - Contracts deployed to Monad Testnet (Chain ID 10143) must be verified on block explorers (MonadScan / MonadVision).
+
 ---
 
-## 3. Technology Stack & Verification Requirements
+## 4. Technology Stack & Verification Requirements
 
-- **Smart Contracts (`contracts/`)**: Foundry, Solidity 0.8.28, OpenZeppelin v5. All unit tests must pass (`forge test`).
+- **Smart Contracts (`contracts/`)**: Foundry, Solidity 0.8.28, OpenZeppelin v5. All unit tests must pass (`forge test`). Mandatory adherence to `monskills`.
 - **Indexer (`indexer/`)**: Envio HyperIndex v3, GraphQL schema, real-time TypeScript event handlers for Monad testnet (Chain ID 10143).
 - **Frontend (`web/`)**: Next.js 15 App Router, TypeScript (strict mode), Tailwind CSS, Viem, Wagmi, Privy. Zero TypeScript or build errors (`npm run build`).
