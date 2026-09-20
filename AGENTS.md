@@ -33,9 +33,11 @@
 ### C. Zero Dead-End or Cosmetic-Only Buttons
 - Every button, drawer, and modal must perform a real functional action, update verifiable state, or interact with real smart contracts / Web Crypto routines.
 
-### D. Zero Sensitive Secret Exposure in Git
-- Real private keys, mnemonic phrases, and production secrets must **NEVER** be committed to Git.
-- The `.gitignore` must strictly ignore all `.env` files. Only sanitized `.env.example` templates with clear documentation may be tracked.
+### D. Zero Sensitive Secret Exposure in Git & Source Code (Absolute Zero Leakage)
+- **STRICTLY FORBIDDEN**: Hardcoding real private keys, mnemonic phrases, provider API keys (such as Alchemy `alch_...`, Infura, QuickNode, Privy app secrets, RPC bearer tokens), or production secrets into ANY source code files (`.ts`, `.tsx`, `.js`, `.json`, `.sol`, `.md`).
+- **MANDATORY**: All external keys must strictly be ingested via environment variables (`process.env.NEXT_PUBLIC_...` or `process.env.ALCHEMY_API_KEY`) with public fallback URLs (e.g. `https://testnet-rpc.monad.xyz`), NEVER with hardcoded fallback strings containing real credentials.
+- **Mandatory Pre-Commit Secret Audit**: Before staging and committing any changes, the agent MUST run a secret scan across git diffs for sensitive patterns (`alch_`, `0x[a-fA-F0-9]{64}`, `PRIVATE_KEY=`, `sk_`, etc.) to guarantee 100% zero secret leakage.
+- The `.gitignore` must strictly ignore all `.env` files recursively (`**/.env*`). Only sanitized `.env.example` templates with generic placeholder documentation may be tracked.
 
 ## 3. Mandatory `monskills` for All Smart Contract Operations
 
