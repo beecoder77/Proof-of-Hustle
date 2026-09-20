@@ -205,9 +205,9 @@ export function MeraEncryptionDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div onClick={onClose} className="absolute inset-0 bg-black/75 backdrop-blur-md" />
+      <div onClick={onClose} className="absolute inset-0 bg-black/75 backdrop-blur-md animate-backdrop-fade cursor-pointer" />
 
-      <div className="relative w-full max-w-lg rounded-2xl border border-white/[0.08] bg-[#151821] p-6 shadow-2xl">
+      <div className="relative w-full max-w-lg rounded-2xl border border-white/[0.08] bg-[#151821] p-6 shadow-2xl animate-modal-pop transform-gpu">
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-white/[0.08] pb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#7C5CFC]/20 text-[#A78BFA]">

@@ -86,14 +86,14 @@ export function SubmissionDrawer({
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Backdrop with Blur */}
+      {/* Backdrop with Smooth Blur Fade */}
       <div
         onClick={onClose}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-black/70 backdrop-blur-[4px] animate-backdrop-fade cursor-pointer"
       />
 
-      {/* Slide-in Drawer Container */}
-      <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
+      {/* Slide-in Drawer Container with Smooth Hardware Transform */}
+      <div className="fixed inset-y-0 right-0 flex max-w-full pl-10 animate-drawer-slide transform-gpu">
         <div className="w-screen max-w-[580px] border-l border-white/[0.08] bg-[#151821] shadow-2xl flex flex-col justify-between">
           {/* Header */}
           <div className="border-b border-white/[0.07] px-6 py-5">

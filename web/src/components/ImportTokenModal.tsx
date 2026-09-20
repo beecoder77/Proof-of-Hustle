@@ -142,10 +142,10 @@ export function ImportTokenModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div onClick={onClose} className="absolute inset-0 bg-black/75 backdrop-blur-md" />
+      <div onClick={onClose} className="absolute inset-0 bg-black/75 backdrop-blur-md animate-backdrop-fade cursor-pointer" />
 
       {/* Modal Card */}
-      <div className="relative w-full max-w-2xl rounded-2xl border border-white/[0.08] bg-[#151821] p-6 shadow-2xl flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-2xl rounded-2xl border border-white/[0.08] bg-[#151821] p-6 shadow-2xl flex flex-col max-h-[90vh] animate-modal-pop transform-gpu">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
           <div className="flex items-center gap-3">

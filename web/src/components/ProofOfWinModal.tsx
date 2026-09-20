@@ -45,9 +45,9 @@ export function ProofOfWinModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div onClick={onClose} className="absolute inset-0 bg-black/75 backdrop-blur-md" />
+      <div onClick={onClose} className="absolute inset-0 bg-black/75 backdrop-blur-md animate-backdrop-fade cursor-pointer" />
 
-      <div className="relative w-full max-w-md rounded-2xl border border-[#10B981]/30 bg-[#151821] p-6 shadow-2xl text-center">
+      <div className="relative w-full max-w-md rounded-2xl border border-[#10B981]/30 bg-[#151821] p-6 shadow-2xl text-center animate-modal-pop transform-gpu">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 rounded-lg p-1 text-[#9CA3AF] hover:text-white"

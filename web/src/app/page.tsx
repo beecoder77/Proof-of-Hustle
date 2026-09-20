@@ -57,48 +57,11 @@ export default function Home() {
   const currentUserAddress =
     user?.wallet?.address || "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
 
-  // Persistent / Reactive States
-  const [gigs, setGigs] = useState<GigItem[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("poh_gigs_v2");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // fallback
-        }
-      }
-    }
-    return INITIAL_GIGS;
-  });
-
-  const [submissions, setSubmissions] = useState<Record<string, SubmissionItem[]>>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("poh_submissions_v2");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // fallback
-        }
-      }
-    }
-    return INITIAL_SUBMISSIONS;
-  });
-
-  const [activities, setActivities] = useState<ActivityItem[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("poh_activities_v2");
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          // fallback
-        }
-      }
-    }
-    return [];
-  });
+  // Client Mount & Deterministic Hydration
+  const [isMounted, setIsMounted] = useState(false);
+  const [gigs, setGigs] = useState<GigItem[]>(INITIAL_GIGS);
+  const [submissions, setSubmissions] = useState<Record<string, SubmissionItem[]>>(INITIAL_SUBMISSIONS);
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
 
   // Modal & Drawer visibility
   const [selectedGig, setSelectedGig] = useState<GigItem | null>(null);
@@ -136,24 +99,45 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState<"ALL" | "CONTEST" | "FCFS" | "SEALED">("ALL");
 
-  // Save to LocalStorage whenever state changes
+  // Hydrate persistent state from LocalStorage only AFTER mount to guarantee identical SSR & client markup
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    setIsMounted(true);
+    try {
+      const savedGigs = localStorage.getItem("poh_gigs_v2");
+      if (savedGigs) {
+        setGigs(JSON.parse(savedGigs));
+      }
+      const savedSubs = localStorage.getItem("poh_submissions_v2");
+      if (savedSubs) {
+        setSubmissions(JSON.parse(savedSubs));
+      }
+      const savedActs = localStorage.getItem("poh_activities_v2");
+      if (savedActs) {
+        setActivities(JSON.parse(savedActs));
+      }
+    } catch (e) {
+      console.error("Failed to load local storage state", e);
+    }
+  }, []);
+
+  // Save to LocalStorage ONLY after client is mounted to avoid overwriting with initial state
+  useEffect(() => {
+    if (isMounted) {
       localStorage.setItem("poh_gigs_v2", JSON.stringify(gigs));
     }
-  }, [gigs]);
+  }, [gigs, isMounted]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (isMounted) {
       localStorage.setItem("poh_submissions_v2", JSON.stringify(submissions));
     }
-  }, [submissions]);
+  }, [submissions, isMounted]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (isMounted) {
       localStorage.setItem("poh_activities_v2", JSON.stringify(activities));
     }
-  }, [activities]);
+  }, [activities, isMounted]);
 
   // Generate authentic 32-byte hash for Monad transactions
   const generateTxHash = useCallback((): string => {
@@ -338,7 +322,8 @@ export default function Home() {
         return { ...prev, [gigId]: updated };
       });
 
-      setSelectedGig(null);
+      // Update selectedGig to SETTLED without unmounting abruptly
+      setSelectedGig((prev) => (prev ? { ...prev, status: "SETTLED" } : null));
 
       // Trigger celebration modal
       setProofOfWinData({
