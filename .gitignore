@@ -23,6 +23,9 @@ contracts/broadcast/
 *.pem
 *.key
 
+# Autonomous Bot Engine & Seed Wallets (CRITICAL - STRICTLY IGNORED)
+bot-seed/
+
 # Documentation & Internal Specs (User Request: excluded from git)
 docs/
 DESIGN.md
