@@ -12,7 +12,11 @@ contract DeployScript is Script {
     function run() external {
         uint256 deployerPrivateKey;
         if (vm.envExists("PRIVATE_KEY")) {
-            deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+            try vm.envUint("PRIVATE_KEY") returns (uint256 key) {
+                deployerPrivateKey = key;
+            } catch {
+                deployerPrivateKey = uint256(vm.envBytes32("PRIVATE_KEY"));
+            }
         } else if (block.chainid == 31337) {
             // Local Anvil fallback only for isolated local simulation using derived test key
             (, deployerPrivateKey) = makeAddrAndKey("localDeployer");

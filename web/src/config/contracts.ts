@@ -38,27 +38,27 @@ export const monadTestnet = defineChain({
 export const CONTRACTS = {
   gigEscrow: {
     address: (process.env.NEXT_PUBLIC_GIG_ESCROW_ADDRESS ||
-      "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9") as `0x${string}`,
+      "0x9ebE2bd656F9d4C158dE698284329a5F2994Beb5") as `0x${string}`,
     abi: GigEscrowAbi,
   },
   hustleToken: {
     address: (process.env.NEXT_PUBLIC_HUSTLE_TOKEN_ADDRESS ||
-      "0x5FbDB2315678afecb367f032d93F642f64180aa3") as `0x${string}`,
+      "0xCd81b45cE054C8A9Fde4447826D406d41712FB73") as `0x${string}`,
     abi: HustleTokenAbi,
   },
   proofOfHustleSBT: {
     address: (process.env.NEXT_PUBLIC_SBT_ADDRESS ||
-      "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512") as `0x${string}`,
+      "0xf84666CbA55368E8F2bE2134e20AFc89027f33b2") as `0x${string}`,
     abi: ProofOfHustleSBTAbi,
   },
   protocolBurnPool: {
     address: (process.env.NEXT_PUBLIC_BURN_POOL_ADDRESS ||
-      "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0") as `0x${string}`,
+      "0xef73DfFdD7795CFe57839f7493D452cf534B506c") as `0x${string}`,
     abi: ProtocolBurnPoolAbi,
   },
   mockUsdt: {
     address: (process.env.NEXT_PUBLIC_MOCK_USDT_ADDRESS ||
-      "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9") as `0x${string}`,
+      "0x0Ba9DA718Adfa048f4EF9F2BF1afe9A5E4077637") as `0x${string}`,
     abi: MockERC20Abi,
   },
 } as const;

@@ -14,6 +14,7 @@ import { BurnTrackerWidget } from "../components/BurnTrackerWidget";
 import { HustlerProfileView } from "../components/HustlerProfileView";
 import { ProofOfWinModal } from "../components/ProofOfWinModal";
 import { ImportTokenModal } from "../components/ImportTokenModal";
+import { TokenomicsView } from "../components/TokenomicsView";
 import { INITIAL_GIGS } from "../data/mockGigs";
 import { GigItem, SubmissionItem, ActivityItem } from "../types";
 import {
@@ -55,10 +56,13 @@ const INITIAL_SUBMISSIONS: Record<string, SubmissionItem[]> = {
 export default function Home() {
   const { user } = usePrivy();
   const currentUserAddress =
-    user?.wallet?.address || "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
+    user?.wallet?.address || "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99";
 
   // Client Mount & Deterministic Hydration
   const [isMounted, setIsMounted] = useState(false);
+  const [currentUsername, setCurrentUsername] = useState<string>(() => {
+    return `@hustler_${currentUserAddress.slice(2, 6)}`;
+  });
   const [gigs, setGigs] = useState<GigItem[]>(INITIAL_GIGS);
   const [submissions, setSubmissions] = useState<Record<string, SubmissionItem[]>>(INITIAL_SUBMISSIONS);
   const [activities, setActivities] = useState<ActivityItem[]>([]);
@@ -103,6 +107,10 @@ export default function Home() {
   useEffect(() => {
     setIsMounted(true);
     try {
+      const savedUser = localStorage.getItem(`poh_username_${currentUserAddress.toLowerCase()}`);
+      if (savedUser) {
+        setCurrentUsername(savedUser);
+      }
       const savedGigs = localStorage.getItem("poh_gigs_v2");
       if (savedGigs) {
         setGigs(JSON.parse(savedGigs));
@@ -118,9 +126,15 @@ export default function Home() {
     } catch (e) {
       console.error("Failed to load local storage state", e);
     }
-  }, []);
+  }, [currentUserAddress]);
 
   // Save to LocalStorage ONLY after client is mounted to avoid overwriting with initial state
+  useEffect(() => {
+    if (isMounted && currentUserAddress) {
+      localStorage.setItem(`poh_username_${currentUserAddress.toLowerCase()}`, currentUsername);
+    }
+  }, [currentUsername, currentUserAddress, isMounted]);
+
   useEffect(() => {
     if (isMounted) {
       localStorage.setItem("poh_gigs_v2", JSON.stringify(gigs));
@@ -193,7 +207,7 @@ export default function Home() {
     const newAct: ActivityItem = {
       id: `act-${Date.now()}`,
       type: "HYPE",
-      text: `@${currentUserAddress.slice(0, 6)}...${currentUserAddress.slice(-4)} hyped '${target?.title || "Gig"}' (+100 $HUSTLE staked)`,
+      text: `${currentUsername} hyped '${target?.title || "Gig"}' (+100 $HUSTLE staked)`,
       timestamp: "Just now",
       txHash,
     };
@@ -219,7 +233,7 @@ export default function Home() {
     const newAct: ActivityItem = {
       id: `act-${Date.now()}`,
       type: "CLAIM",
-      text: `@${currentUserAddress.slice(0, 6)}...${currentUserAddress.slice(-4)} claimed FCFS task '${target?.title || "Gig"}'`,
+      text: `${currentUsername} claimed FCFS task '${target?.title || "Gig"}'`,
       timestamp: "Just now",
       txHash,
     };
@@ -288,7 +302,7 @@ export default function Home() {
     const newAct: ActivityItem = {
       id: `act-${Date.now()}`,
       type: "CLAIM",
-      text: `@${currentUserAddress.slice(0, 6)}...${currentUserAddress.slice(-4)} submitted deliverable for '${target?.title || "Gig"}'${
+      text: `${currentUsername} submitted deliverable for '${target?.title || "Gig"}'${
         isSealed ? " [MERA PRF Sealed]" : ""
       }`,
       timestamp: "Just now",
@@ -337,7 +351,7 @@ export default function Home() {
       const newAct: ActivityItem = {
         id: `act-${Date.now()}`,
         type: "PAYOUT",
-        text: `@${currentUserAddress.slice(0, 6)}...${currentUserAddress.slice(-4)} released ${target.rewardAmount} ${target.rewardToken} for '${target.title}'`,
+        text: `${currentUsername} released ${target.rewardAmount} ${target.rewardToken} for '${target.title}'`,
         timestamp: "Just now",
         txHash,
       };
@@ -468,6 +482,7 @@ export default function Home() {
         onOpenTokenModal={() => setIsTokenModalOpen(true)}
         activeTab={activeNavTab}
         setActiveTab={setActiveNavTab}
+        currentUsername={currentUsername}
       />
 
       {/* Live Monad Telemetry Bar */}
@@ -486,7 +501,15 @@ export default function Home() {
         {/* Navigation Tab Switching */}
         {activeNavTab === "community" && <CommunityBountyHub />}
         {activeNavTab === "burn" && <BurnTrackerWidget />}
-        {activeNavTab === "profile" && <HustlerProfileView />}
+        {activeNavTab === "tokenomics" && <TokenomicsView />}
+        {activeNavTab === "profile" && (
+          <HustlerProfileView
+            currentUserAddress={currentUserAddress}
+            currentUsername={currentUsername}
+            onUpdateUsername={setCurrentUsername}
+            onTriggerToast={triggerTxToast}
+          />
+        )}
 
         {activeNavTab === "explore" && (
           <div className="space-y-8">

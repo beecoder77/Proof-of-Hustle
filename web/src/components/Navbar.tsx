@@ -9,6 +9,7 @@ interface NavbarProps {
   onOpenTokenModal?: () => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  currentUsername?: string;
 }
 
 export function Navbar({
@@ -16,6 +17,7 @@ export function Navbar({
   onOpenTokenModal,
   activeTab,
   setActiveTab,
+  currentUsername,
 }: NavbarProps) {
   const { ready, authenticated, user, login, logout } = usePrivy();
 
@@ -81,6 +83,16 @@ export function Navbar({
               Burn Flywheel
             </button>
             <button
+              onClick={() => setActiveTab("tokenomics")}
+              className={`rounded-md px-3 py-1.5 transition-colors ${
+                activeTab === "tokenomics"
+                  ? "bg-white/[0.08] text-[#F9FAFB]"
+                  : "text-[#9CA3AF] hover:bg-white/[0.04] hover:text-[#F9FAFB]"
+              }`}
+            >
+              Tokenomics
+            </button>
+            <button
               onClick={() => setActiveTab("profile")}
               className={`rounded-md px-3 py-1.5 transition-colors ${
                 activeTab === "profile"
@@ -118,10 +130,16 @@ export function Navbar({
           {/* Privy Passkey / Wallet Connect */}
           {ready && authenticated ? (
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-[#151821] px-3 py-1.5 text-xs font-medium text-[#F9FAFB]">
+              <button
+                onClick={() => setActiveTab("profile")}
+                className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-[#151821] px-3 py-1.5 text-xs font-medium text-[#F9FAFB] hover:border-[#7C5CFC]/50 transition-colors"
+                title="View your Hustler Profile"
+              >
                 <div className="h-2 w-2 rounded-full bg-[#10B981]" />
-                <span className="tabular-numbers">{formattedAddress}</span>
-              </div>
+                <span className="tabular-numbers font-semibold text-white">
+                  {currentUsername || formattedAddress}
+                </span>
+              </button>
               <button
                 onClick={logout}
                 title="Disconnect Wallet"
