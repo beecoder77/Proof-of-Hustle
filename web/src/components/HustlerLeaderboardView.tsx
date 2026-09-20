@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { CONTRACTS } from "../config/contracts";
 
+import seededOnchainData from "../data/seededOnchainData.json";
+
 interface LeaderboardUser {
   rank: number;
   handle: string;
@@ -33,78 +35,7 @@ interface LeaderboardUser {
   recentTxHash: string;
 }
 
-const LEADERBOARD_DATA: LeaderboardUser[] = [
-  {
-    rank: 1,
-    handle: "@nad_architect",
-    address: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80",
-    totalEarningsUsdt: 6850,
-    completedTasks: 8,
-    sbtCount: 8,
-    rating: 5.0,
-    hustleMined: 102.75,
-    topSkills: ["Parallel EVM", "Foundry", "Gas Tuning"],
-    recentWorkTitle: "Parallel EVM Storage Slot Collision Benchmark",
-    recentTxHash: "0x4e836fe210315fcd9d6019329d0fd5ddae918ba94df09259be669b40f0527619",
-  },
-  {
-    rank: 2,
-    handle: "@monad_vanguard",
-    address: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80",
-    totalEarningsUsdt: 5200,
-    completedTasks: 6,
-    sbtCount: 6,
-    rating: 4.9,
-    hustleMined: 78.0,
-    topSkills: ["TypeScript", "Viem", "Alchemy Transport"],
-    recentWorkTitle: "Alchemy Multi-Transport Failover & Latency Monitor",
-    recentTxHash: "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
-  },
-  {
-    rank: 3,
-    handle: "@keccak_cipher",
-    address: "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
-    avatar: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=120&q=80",
-    totalEarningsUsdt: 4100,
-    completedTasks: 5,
-    sbtCount: 5,
-    rating: 5.0,
-    hustleMined: 61.5,
-    topSkills: ["WebCrypto", "Mera PRF", "Zero-Knowledge"],
-    recentWorkTitle: "MERA PRF Sealed Escrow Client Implementation",
-    recentTxHash: "0x26d5bbd83d5188ecbb9660be9a70b07db8008c34620a7c87f04930c22983322e",
-  },
-  {
-    rank: 4,
-    handle: "@solidity_samurai",
-    address: "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80",
-    totalEarningsUsdt: 3400,
-    completedTasks: 4,
-    sbtCount: 4,
-    rating: 4.8,
-    hustleMined: 51.0,
-    topSkills: ["Solidity", "Reentrancy Guard", "ERC-5192"],
-    recentWorkTitle: "Soulbound Credential Gas Optimization for Monad",
-    recentTxHash: "0x8d1590b5d5d8fbda3b2b8006bf36055d045864111ce3d35a507aebff89fb9166",
-  },
-  {
-    rank: 5,
-    handle: "@monad_memelord",
-    address: "0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc",
-    avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=120&q=80",
-    totalEarningsUsdt: 2950,
-    completedTasks: 7,
-    sbtCount: 7,
-    rating: 4.9,
-    hustleMined: 44.25,
-    topSkills: ["Motion Graphics", "3D Blender", "Culture"],
-    recentWorkTitle: "Monad 3D Animated Video Meme & Sticker Pack",
-    recentTxHash: "0x9fac6c20e63e1c289fb668bd56e46b07c58b293625ea86e79fd6fe463340de6c",
-  },
-];
+const LEADERBOARD_DATA: LeaderboardUser[] = seededOnchainData.leaderboard as LeaderboardUser[];
 
 interface HustlerLeaderboardViewProps {
   onSelectUser?: (address: string) => void;

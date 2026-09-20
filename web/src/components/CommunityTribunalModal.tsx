@@ -22,6 +22,7 @@ import {
   raiseDisputeOnchain,
 } from "../services/onchain";
 import { CONTRACTS } from "../config/contracts";
+import seededOnchainData from "../data/seededOnchainData.json";
 
 interface DisputeItem {
   id: string;
@@ -51,40 +52,41 @@ interface CommunityTribunalModalProps {
 
 const SEED_DISPUTES: DisputeItem[] = [
   {
-    id: "disp-1",
-    gigId: "1",
-    gigTitle: "Parallel EVM Hot Storage Slot Collision Benchmark Suite",
-    creator: "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720",
-    worker: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-    amount: "2,500",
+    id: "disp-28",
+    gigId: "28",
+    gigTitle: seededOnchainData.disputes[0]?.title || "EVM Storage Collision Verification Dispute",
+    creator: "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99",
+    worker: "0x64a71a50Fb8A1C34E69714EAab9Db9a2c54e8Ac8", // @solidity_samurai
+    amount: "1,000",
     token: "USDT",
     disputeReason:
-      "Client claimed deliverable lacked 100-concurrency benchmark charts, but worker delivered comprehensive Foundry test logs meeting initial specs.",
+      "Client questioned gas optimization logs for hot storage slots. Community Jurors (@evm_auditor & @parallel_hustler) reviewed Foundry traces and voted 2-0 to release funds to the worker.",
     deliverableUri: "https://github.com/monad-developers/parallel-benchmark-suite/pull/42",
-    workerVotes: 1,
+    workerVotes: 2,
     clientVotes: 0,
     totalJurorsNeeded: 2,
-    hoursElapsed: 38,
-    status: "ACTIVE_DISPUTE",
-    recentTxHash: "0x4e836fe210315fcd9d6019329d0fd5ddae918ba94df09259be669b40f0527619",
+    hoursElapsed: 42,
+    status: "RESOLVED",
+    resolutionOutcome: "Settled in favor of Worker (100% Payout Released on Monad Testnet)",
+    recentTxHash: seededOnchainData.disputes[0]?.resolutionTx || "0x1fae8417c21418ffab6314bbbae355eaf99be494958126db58e879bad627c493",
   },
   {
-    id: "disp-2",
-    gigId: "2",
+    id: "disp-29",
+    gigId: "29",
     gigTitle: "Alchemy Multi-Transport Failover & Latency Monitor",
-    creator: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-    worker: "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+    creator: "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99",
+    worker: "0xDd99eA991efBd3248150727f5e8602c85058E0B2", // @monad_vanguard
     amount: "1,200",
     token: "USDT",
     disputeReason:
-      "Client went silent after final deliverable submitted 74 hours ago. Worker is invoking 72h anti-ghosting auto-release.",
+      "Client went silent after final deliverable submitted 74 hours ago. Worker is invoking 72h anti-ghosting auto-release protocol.",
     deliverableUri: "https://github.com/alchemyplatform/monad-failover-sdk/pull/18",
     workerVotes: 0,
     clientVotes: 0,
     totalJurorsNeeded: 2,
     hoursElapsed: 74,
     status: "AUTO_RELEASE_ELIGIBLE",
-    recentTxHash: "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
+    recentTxHash: seededOnchainData.completedGigs[1]?.submitTx || "0x3dd79c2358267146674c85639504ed8bfdd95d79da173f21051475336d3b0312",
   },
 ];
 
@@ -105,7 +107,7 @@ export function CommunityTribunalModal({
     setIsProcessing(true);
     try {
       const res = await voteDisputeOnchain(gigId, vote);
-      const tx = res.success && res.txHash ? res.txHash : "0x4e836fe210315fcd9d6019329d0fd5ddae918ba94df09259be669b40f0527619";
+      const tx = res.success && res.txHash ? res.txHash : undefined;
 
       // Update state
       setDisputes((prev) =>
@@ -125,7 +127,7 @@ export function CommunityTribunalModal({
                 ? "Settled in favor of Worker (100% Payout Released)"
                 : "Refunded to Client"
               : undefined,
-            recentTxHash: tx,
+            recentTxHash: tx || d.recentTxHash,
           };
         })
       );
@@ -137,7 +139,7 @@ export function CommunityTribunalModal({
                 ...prev,
                 workerVotes: vote === 1 ? prev.workerVotes + 1 : prev.workerVotes,
                 clientVotes: vote === 2 ? prev.clientVotes + 1 : prev.clientVotes,
-                recentTxHash: tx,
+                recentTxHash: tx || prev.recentTxHash,
               }
             : null
         );
@@ -162,7 +164,7 @@ export function CommunityTribunalModal({
     setIsProcessing(true);
     try {
       const res = await autoReleaseOnchain(gigId);
-      const tx = res.success && res.txHash ? res.txHash : "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098";
+      const tx = res.success && res.txHash ? res.txHash : undefined;
 
       setDisputes((prev) =>
         prev.map((d) =>
@@ -171,7 +173,7 @@ export function CommunityTribunalModal({
                 ...d,
                 status: "RESOLVED",
                 resolutionOutcome: "Auto-Released (72h Anti-Ghosting Clock Elapsed). Worker received 100% payout & 5-star SBT.",
-                recentTxHash: tx,
+                recentTxHash: tx || d.recentTxHash,
               }
             : d
         )
@@ -184,22 +186,22 @@ export function CommunityTribunalModal({
                 ...prev,
                 status: "RESOLVED",
                 resolutionOutcome: "Auto-Released (72h Anti-Ghosting Clock Elapsed). Worker received 100% payout & 5-star SBT.",
-                recentTxHash: tx,
+                recentTxHash: tx || prev.recentTxHash,
               }
             : null
         );
       }
 
       onTriggerToast(
-        "Escrow Auto-Released Onchain!",
+        "Auto-Release Executed Onchain!",
         res.success
-          ? `Anti-ghosting trigger executed. 100% payout and 5-star SBT minted on Monad (Block #${res.blockNumber || ""}).`
-          : "Auto-release executed on Monad Testnet.",
+          ? `100% Escrow funds released to Worker on Monad (Block #${res.blockNumber || ""}).`
+          : "Auto-release executed.",
         tx
       );
     } catch (err: any) {
-      console.error("AutoRelease failed:", err);
-      onTriggerToast("Auto-Release Error", err?.message || "Could not trigger auto-release", "");
+      console.error("Auto-release failed:", err);
+      onTriggerToast("Auto-Release Error", err?.message || "Failed to trigger auto-release", "");
     } finally {
       setIsProcessing(false);
     }

@@ -20,8 +20,8 @@ export function ProofOfWinModal({
   gigTitle,
   payoutAmount,
   rewardToken,
-  txHash = "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
-  sbtTokenId = "14",
+  txHash = "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
+  sbtTokenId = "1",
 }: ProofOfWinModalProps) {
   useEffect(() => {
     if (isOpen) {

@@ -18,6 +18,7 @@ import {
   Gift,
 } from "lucide-react";
 import { CONTRACTS } from "../config/contracts";
+import seededOnchainData from "../data/seededOnchainData.json";
 import {
   stakeHypeOnchain,
   createGigOnchain,
@@ -43,8 +44,8 @@ interface CommunityBounty {
 const ONCHAIN_BOUNTIES: CommunityBounty[] = [
   {
     id: "b1",
-    gigId: "1",
-    title: "Parallel EVM Hot Storage Slot Collision Benchmark Suite",
+    gigId: "23",
+    title: seededOnchainData.completedGigs[0]?.title || "Parallel EVM Storage Slot Collision Benchmark Suite",
     description:
       "Community-pooled bounty to stress test concurrent storage slot conflicts, measuring throughput and abort/retry latency on Monad parallel execution.",
     targetGoal: 2500,
@@ -54,12 +55,12 @@ const ONCHAIN_BOUNTIES: CommunityBounty[] = [
     backersCount: 29,
     daysRemaining: 6,
     tags: ["Solidity", "Parallel EVM", "Foundry"],
-    recentTxHash: "0x4e836fe210315fcd9d6019329d0fd5ddae918ba94df09259be669b40f0527619",
+    recentTxHash: seededOnchainData.completedGigs[0]?.payoutTx || "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
   },
   {
     id: "b2",
-    gigId: "2",
-    title: "Alchemy Multi-Transport Failover & Latency Monitor",
+    gigId: "24",
+    title: seededOnchainData.completedGigs[1]?.title || "Alchemy Multi-Transport Failover & Latency Monitor",
     description:
       "High-performance TypeScript RPC client that monitors block latency on Monad testnet and seamlessly fails over to backup RPCs under 100ms.",
     targetGoal: 1200,
@@ -69,52 +70,52 @@ const ONCHAIN_BOUNTIES: CommunityBounty[] = [
     backersCount: 16,
     daysRemaining: 3,
     tags: ["TypeScript", "Viem", "Alchemy"],
-    recentTxHash: "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
+    recentTxHash: seededOnchainData.completedGigs[1]?.payoutTx || "0xafc8d609315d0052a556d1ae9d9bb541da2673796ec267684a3d12d0f7224e63",
   },
   {
     id: "b3",
-    gigId: "3",
-    title: "Cairo to Monad Solidity Transpiler Cheatsheet",
+    gigId: "25",
+    title: seededOnchainData.completedGigs[2]?.title || "MERA PRF Biometric Key Derivation Test Suite",
     description:
-      "Sponsor a research engineer to document exact opcode equivalence and memory patterns when porting Starknet contracts to Monad EVM.",
+      "Deterministic WebAuthn passkey PRF extension client deriving unique entropy for sealed escrow deliverables on Monad Testnet.",
     targetGoal: 1500,
-    currentRaised: 1100,
+    currentRaised: 1500,
     currency: "USDT",
-    hypeStaked: 500,
+    hypeStaked: 220,
     backersCount: 22,
-    daysRemaining: 2,
-    tags: ["Research", "EVM", "DevTools"],
-    recentTxHash: "0x26d5bbd83d5188ecbb9660be9a70b07db8008c34620a7c87f04930c22983322e",
+    daysRemaining: 4,
+    tags: ["Cryptography", "Mera PRF", "WebAuthn"],
+    recentTxHash: seededOnchainData.completedGigs[2]?.payoutTx || "0x79c318b90ad0d6f8a0669dd83f8cfe062d5a601df34e1891a8f160115a65b5c1",
   },
   {
     id: "b4",
-    gigId: "4",
-    title: "Monad 3D Animated Video Meme & Sticker Collection",
+    gigId: "26",
+    title: seededOnchainData.completedGigs[3]?.title || "Monad Gas Tuning & Cold Storage Benchmark",
     description:
-      "Community-pooled bounty to commission a world-class 3D animator to build official Monad Discord & Telegram sticker pack and looping animations.",
-    targetGoal: 2000,
-    currentRaised: 1750,
+      "Foundry benchmark evaluating Monad testnet gas schedules, warm vs cold slot reads, and scheduler abort frequencies.",
+    targetGoal: 1000,
+    currentRaised: 1000,
     currency: "USDT",
-    hypeStaked: 350,
-    backersCount: 38,
+    hypeStaked: 160,
+    backersCount: 19,
     daysRemaining: 5,
-    tags: ["Community", "Animation", "Memes"],
-    recentTxHash: "0x9fac6c20e63e1c289fb668bd56e46b07c58b293625ea86e79fd6fe463340de6c",
+    tags: ["Gas", "Storage", "Solidity"],
+    recentTxHash: seededOnchainData.completedGigs[3]?.payoutTx || "0xd197f8545d9485a8d167907228cac2a9d74b4a7ee7560643c8cfa9297209ee73",
   },
   {
     id: "b5",
-    gigId: "5",
-    title: "Monad Hacker House London Rapid Sprint Fund",
+    gigId: "27",
+    title: seededOnchainData.completedGigs[4]?.title || "Monad 3D Animated Video Meme & Sticker Collection",
     description:
-      "Community grant pool providing 500 USDT micro-bounties for builders shipping sub-second dapps at the London Hacker Lounge.",
-    targetGoal: 3000,
-    currentRaised: 2200,
+      "Community-pooled bounty to commission high-energy 3D animation assets and sticker loops celebrating Monad's 400ms block finality.",
+    targetGoal: 800,
+    currentRaised: 800,
     currency: "USDT",
-    hypeStaked: 420,
-    backersCount: 45,
-    daysRemaining: 9,
-    tags: ["HackerHouse", "Grants", "IRL"],
-    recentTxHash: "0x6311b503b47c3a995c7b5d1e00509a81b8c127acde85bf3d60155f9e5abae9ad",
+    hypeStaked: 350,
+    backersCount: 38,
+    daysRemaining: 7,
+    tags: ["Community", "Animation", "Memes"],
+    recentTxHash: seededOnchainData.completedGigs[4]?.payoutTx || "0x4cdf582a277fa81d65481e02753b34503ac9c6ceba1bd3597e5e7add1c8f75eb",
   },
 ];
 
@@ -136,24 +137,24 @@ interface CommunityBountyHubProps {
 
 const INITIAL_CURATIONS: UserCurationPosition[] = [
   {
-    gigId: "1",
-    gigTitle: "Parallel EVM Hot Storage Slot Collision Benchmark Suite",
-    stakedAmount: 150,
-    earlyRank: 2,
-    claimableYieldUsdt: 12.50,
+    gigId: "23",
+    gigTitle: seededOnchainData.completedGigs[0]?.title || "Parallel EVM Storage Slot Collision Benchmark Suite",
+    stakedAmount: 50,
+    earlyRank: 1,
+    claimableYieldUsdt: 2.50,
     isSettled: true,
     isClaimed: false,
-    txHash: "0x4e836fe210315fcd9d6019329d0fd5ddae918ba94df09259be669b40f0527619",
+    txHash: seededOnchainData.completedGigs[0]?.hypeTx || "0x4151539e8afa03ee467d6f1ab02300715a0db5da3a0b2b9aad542932c95d5749",
   },
   {
-    gigId: "2",
-    gigTitle: "Alchemy Multi-Transport Failover & Latency Monitor",
-    stakedAmount: 100,
-    earlyRank: 5,
-    claimableYieldUsdt: 6.00,
+    gigId: "24",
+    gigTitle: seededOnchainData.completedGigs[1]?.title || "Alchemy Multi-Transport Failover & Latency Monitor",
+    stakedAmount: 50,
+    earlyRank: 1,
+    claimableYieldUsdt: 1.20,
     isSettled: true,
     isClaimed: false,
-    txHash: "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
+    txHash: seededOnchainData.completedGigs[1]?.hypeTx || "0x056f66b90357a9bfa560bab7d8446d40c26e0e818b703b9624ca555dca664532",
   },
 ];
 
@@ -266,11 +267,11 @@ export function CommunityBountyHub({
     setIsClaimingYield((prev) => ({ ...prev, [gigId]: true }));
     try {
       const res = await claimCurationRewardOnchain(gigId);
-      const tx = res.success && res.txHash ? res.txHash : "0x4e836fe210315fcd9d6019329d0fd5ddae918ba94df09259be669b40f0527619";
+      const tx = res.success && res.txHash ? res.txHash : undefined;
       setCurations((prev) =>
         prev.map((c) =>
           c.gigId === gigId
-            ? { ...c, isClaimed: true, claimableYieldUsdt: 0, txHash: tx }
+            ? { ...c, isClaimed: true, claimableYieldUsdt: 0, txHash: tx || c.txHash }
             : c
         )
       );
@@ -294,11 +295,11 @@ export function CommunityBountyHub({
     setIsUnstaking((prev) => ({ ...prev, [gigId]: true }));
     try {
       const res = await unstakeHypeOnchain(gigId);
-      const tx = res.success && res.txHash ? res.txHash : "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098";
+      const tx = res.success && res.txHash ? res.txHash : undefined;
       setCurations((prev) =>
         prev.map((c) =>
           c.gigId === gigId
-            ? { ...c, stakedAmount: 0, txHash: tx }
+            ? { ...c, stakedAmount: 0, txHash: tx || c.txHash }
             : c
         )
       );

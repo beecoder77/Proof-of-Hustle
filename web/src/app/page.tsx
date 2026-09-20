@@ -41,27 +41,27 @@ import {
 
 // Initial seed submissions for realism
 const INITIAL_SUBMISSIONS: Record<string, SubmissionItem[]> = {
-  "1": [
+  "23": [
     {
-      id: "sub-1-1",
-      gigId: "1",
-      hustler: "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      id: "sub-23-1",
+      gigId: "23",
+      hustler: "0x8fe5bB58832f4c7E955f230bbfB4bBfbdb6D20e7",
       submittedAt: Date.now() - 3600 * 1000,
       deliverableUri: "https://github.com/monad-developers/parallel-benchmark-suite/pull/42",
       isSealed: true,
       commitHash: "0x8f3c7a9e1024bd58102837bcde81940a23bc8910482910495810294819204812",
-      isWinner: false,
+      isWinner: true,
     },
   ],
-  "2": [
+  "24": [
     {
-      id: "sub-2-1",
-      gigId: "2",
-      hustler: "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+      id: "sub-24-1",
+      gigId: "24",
+      hustler: "0xDd99eA991efBd3248150727f5e8602c85058E0B2",
       submittedAt: Date.now() - 7200 * 1000,
       deliverableUri: "https://github.com/alchemyplatform/monad-failover-sdk/pull/18",
       isSealed: false,
-      isWinner: false,
+      isWinner: true,
     },
   ],
 };
@@ -103,7 +103,7 @@ export default function Home() {
     title: "",
     amount: "",
     token: "",
-    txHash: "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
+    txHash: "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
   });
 
   // Sub-second Monad Transaction Toast Notification
@@ -226,19 +226,18 @@ export default function Home() {
 
     try {
       const res = await stakeHypeOnchain(gigId);
-      const txHash =
-        res.success && res.txHash
-          ? res.txHash
-          : "0x9fac6c20e63e1c289fb668bd56e46b07c58b293625ea86e79fd6fe463340de6c";
+      const txHash = res.success && res.txHash ? res.txHash : "";
 
-      const newAct: ActivityItem = {
-        id: `act-${Date.now()}`,
-        type: "HYPE",
-        text: `${currentUsername} hyped '${target?.title || "Gig"}' (+100 $HUSTLE staked)`,
-        timestamp: "Just now",
-        txHash,
-      };
-      setActivities((prev) => [newAct, ...prev]);
+      if (txHash) {
+        const newAct: ActivityItem = {
+          id: `act-${Date.now()}`,
+          type: "HYPE",
+          text: `${currentUsername} hyped '${target?.title || "Gig"}' (+100 $HUSTLE staked)`,
+          timestamp: "Just now",
+          txHash,
+        };
+        setActivities((prev) => [newAct, ...prev]);
+      }
 
       triggerTxToast(
         "+100 $HUSTLE Staked Onchain!",
@@ -264,19 +263,18 @@ export default function Home() {
 
     try {
       const res = await claimTaskOnchain(gigId);
-      const txHash =
-        res.success && res.txHash
-          ? res.txHash
-          : "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098";
+      const txHash = res.success && res.txHash ? res.txHash : "";
 
-      const newAct: ActivityItem = {
-        id: `act-${Date.now()}`,
-        type: "CLAIM",
-        text: `${currentUsername} claimed FCFS task '${target?.title || "Gig"}'`,
-        timestamp: "Just now",
-        txHash,
-      };
-      setActivities((prev) => [newAct, ...prev]);
+      if (txHash) {
+        const newAct: ActivityItem = {
+          id: `act-${Date.now()}`,
+          type: "CLAIM",
+          text: `${currentUsername} claimed FCFS task '${target?.title || "Gig"}'`,
+          timestamp: "Just now",
+          txHash,
+        };
+        setActivities((prev) => [newAct, ...prev]);
+      }
 
       triggerTxToast(
         "Task Claimed Onchain!",
@@ -349,27 +347,26 @@ export default function Home() {
         !!isSealed,
         commitHash
       );
-      const txHash =
-        res.success && res.txHash
-          ? res.txHash
-          : "0x26d5bbd83d5188ecbb9660be9a70b07db8008c34620a7c87f04930c22983322e";
+      const txHash = res.success && res.txHash ? res.txHash : "";
 
-      const newAct: ActivityItem = {
-        id: `act-${Date.now()}`,
-        type: "CLAIM",
-        text: `${currentUsername} submitted deliverable for '${target?.title || "Gig"}'${
-          isSealed ? " [MERA PRF Sealed]" : ""
-        }`,
-        timestamp: "Just now",
-        txHash,
-      };
-      setActivities((prev) => [newAct, ...prev]);
+      if (txHash) {
+        const newAct: ActivityItem = {
+          id: `act-${Date.now()}`,
+          type: "CLAIM",
+          text: `${currentUsername} submitted deliverable for '${target?.title || "Gig"}'${
+            isSealed ? " [MERA PRF Sealed]" : ""
+          }`,
+          timestamp: "Just now",
+          txHash,
+        };
+        setActivities((prev) => [newAct, ...prev]);
+      }
 
       triggerTxToast(
         isSealed ? "Sealed Deliverable Submitted Onchain!" : "Deliverable Submitted Onchain!",
         res.success
-          ? `Confirmed in sub-400ms on Monad Testnet (Block #${res.blockNumber || ""}).`
-          : `Confirmed on Monad Testnet with Escrow ID #${gigId}.`,
+          ? `Deliverable registered on Monad Testnet (Block #${res.blockNumber || ""}).`
+          : "Deliverable registered.",
         txHash
       );
     } catch (err) {
@@ -400,10 +397,7 @@ export default function Home() {
 
     try {
       const res = await approvePayoutOnchain(gigId, 1, 5);
-      const txHash =
-        res.success && res.txHash
-          ? res.txHash
-          : "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098";
+      const txHash = res.success && res.txHash ? res.txHash : "";
 
       // Trigger celebration modal with authentic onchain tx
       setProofOfWinData({
@@ -411,18 +405,19 @@ export default function Home() {
         title: target.title,
         amount: target.rewardAmount,
         token: target.rewardToken,
-        txHash,
+        txHash: txHash || undefined,
       });
 
-      // Record activity
-      const newAct: ActivityItem = {
-        id: `act-${Date.now()}`,
-        type: "PAYOUT",
-        text: `${currentUsername} released ${target.rewardAmount} ${target.rewardToken} for '${target.title}'`,
-        timestamp: "Just now",
-        txHash,
-      };
-      setActivities((prev) => [newAct, ...prev]);
+      if (txHash) {
+        const newAct: ActivityItem = {
+          id: `act-${Date.now()}`,
+          type: "PAYOUT",
+          text: `${currentUsername} released ${target.rewardAmount} ${target.rewardToken} for '${target.title}'`,
+          timestamp: "Just now",
+          txHash,
+        };
+        setActivities((prev) => [newAct, ...prev]);
+      }
 
       triggerTxToast(
         "Escrow Released & Settled Onchain!",
@@ -433,14 +428,6 @@ export default function Home() {
       );
     } catch (err) {
       console.error("Approve payout onchain call failed:", err);
-      // Fallback display
-      setProofOfWinData({
-        isOpen: true,
-        title: target.title,
-        amount: target.rewardAmount,
-        token: target.rewardToken,
-        txHash: "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
-      });
     }
   };
 
@@ -474,19 +461,18 @@ export default function Home() {
         created.isSealed
       );
 
-      const txHash =
-        res.success && res.txHash
-          ? res.txHash
-          : "0xb9ab9a2d2dce12de039ac10a70bb1e871d9eb23416c60e9d11c6b10e2605e2cf";
+      const txHash = res.success && res.txHash ? res.txHash : "";
 
-      const newAct: ActivityItem = {
-        id: `act-${Date.now()}`,
-        type: "CLAIM",
-        text: `@${currentUserAddress.slice(0, 6)}...${currentUserAddress.slice(-4)} posted new gig '${created.title}' (${created.rewardAmount} ${created.rewardToken})`,
-        timestamp: "Just now",
-        txHash,
-      };
-      setActivities((prev) => [newAct, ...prev]);
+      if (txHash) {
+        const newAct: ActivityItem = {
+          id: `act-${Date.now()}`,
+          type: "CLAIM",
+          text: `@${currentUserAddress.slice(0, 6)}...${currentUserAddress.slice(-4)} posted new gig '${created.title}' (${created.rewardAmount} ${created.rewardToken})`,
+          timestamp: "Just now",
+          txHash,
+        };
+        setActivities((prev) => [newAct, ...prev]);
+      }
 
       triggerTxToast(
         "Bounty Escrow Deposited Onchain!",

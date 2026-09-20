@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Zap, Flame, CheckCircle, ShieldCheck } from "lucide-react";
 
 import { ActivityItem } from "../types";
+import seededOnchainData from "../data/seededOnchainData.json";
 
 const DEFAULT_ACTIVITIES: {
   icon: typeof CheckCircle;
@@ -15,30 +16,37 @@ const DEFAULT_ACTIVITIES: {
   {
     icon: CheckCircle,
     color: "text-[#34D399]",
-    text: "@dev_alex completed 'Build Multi-RPC Dashboard' — 1,250 USDT released via Escrow",
-    time: "12s ago",
-    tx: "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
+    text: `@nad_architect completed '${seededOnchainData.completedGigs[0]?.title}' — 2,500 USDT released via Escrow`,
+    time: "Block #64156452",
+    tx: seededOnchainData.completedGigs[0]?.payoutTx || "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
   },
   {
     icon: Flame,
     color: "text-[#FBBF24]",
-    text: "@hustler99 hyped 'Monad 3D Mascot Challenge' (+500 $HUSTLE staked)",
-    time: "34s ago",
-    tx: "0x9fac6c20e63e1c289fb668bd56e46b07c58b293625ea86e79fd6fe463340de6c",
+    text: `@monad_vanguard hyped '${seededOnchainData.completedGigs[0]?.title}' (+50 $HUSTLE staked)`,
+    time: "Block #64156450",
+    tx: seededOnchainData.completedGigs[0]?.hypeTx || "0x4151539e8afa03ee467d6f1ab02300715a0db5da3a0b2b9aad542932c95d5749",
   },
   {
     icon: Flame,
     color: "text-[#F87171]",
-    text: "450 $HUSTLE permanently burned from recent escrow completions",
-    time: "1m ago",
-    tx: "0x1dda7be805b72c51de0975c2997eb5ad1a709b5226064d5d6f1c89c85c6a24ce",
+    text: "300 $HUSTLE permanently burned on ProtocolBurnPool",
+    time: "Block #64156542",
+    tx: seededOnchainData.protocolBurns[0]?.burnTx || "0x271661972466136df0a72126123abbb1cd452a27df426cffbd4314d8a4ec691f",
   },
   {
     icon: ShieldCheck,
     color: "text-[#A78BFA]",
-    text: "Verified ERC-5192 Proof-of-Work SBT #12 minted to @creative_nad",
-    time: "2m ago",
-    tx: "0xd4e6449a95a04a7b31b3f6bdc8e397d0f12d0114f47cb6f38f5fb096e6ce1b67",
+    text: "Verified ERC-5192 Proof-of-Work SBT #1 minted to @nad_architect",
+    time: "Block #64156452",
+    tx: seededOnchainData.completedGigs[0]?.payoutTx || "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
+  },
+  {
+    icon: CheckCircle,
+    color: "text-[#34D399]",
+    text: `Community Tribunal resolved dispute on Gig #28 in favor of worker @solidity_samurai`,
+    time: "Block #64156536",
+    tx: seededOnchainData.disputes[0]?.resolutionTx || "0x1fae8417c21418ffab6314bbbae355eaf99be494958126db58e879bad627c493",
   },
 ];
 

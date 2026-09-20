@@ -51,7 +51,7 @@ export function BuilderStarterModal({
     setIsMintingUsdt(true);
     try {
       const res = await claimUsdtFaucetOnchain(currentUserAddress);
-      const tx = res.success && res.txHash ? res.txHash : "0x0Ba9DA718Adfa048f4EF9F2BF1afe9A5E4077637";
+      const tx = res.success && res.txHash ? res.txHash : undefined;
       onTriggerToast(
         "+1,000 Mock USDT Claimed!",
         res.success
@@ -71,7 +71,7 @@ export function BuilderStarterModal({
     setIsMintingHustle(true);
     try {
       const res = await claimHustleFaucetOnchain(currentUserAddress);
-      const tx = res.success && res.txHash ? res.txHash : "0xCd81b45cE054C8A9Fde4447826D406d41712FB73";
+      const tx = res.success && res.txHash ? res.txHash : undefined;
       onTriggerToast(
         "+500 $HUSTLE Claimed!",
         res.success

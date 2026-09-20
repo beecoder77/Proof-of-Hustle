@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Flame, ExternalLink, ArrowDownRight, CheckCircle2, AlertCircle } from "lucide-react";
 import { CONTRACTS } from "../config/contracts";
 import { fetchTotalBurnedOnchain, burnHustleOnchain } from "../services/onchain";
+import seededOnchainData from "../data/seededOnchainData.json";
 
 interface BurnRecord {
   amount: string;
@@ -21,28 +22,28 @@ export function BurnTrackerWidget() {
 
   const [burnHistory, setBurnHistory] = useState<BurnRecord[]>([
     {
-      amount: "150",
-      gig: "Onchain Protocol Fee Deflation Burn",
-      time: "Just now",
-      tx: "0x8d1590b55ba128c3a058b6002eed77bd129452a284357dda9ae6002ed37b1f85",
+      amount: "300",
+      gig: "ProtocolBurnPool Permissionless Deflation Burn",
+      time: "Block #64156542",
+      tx: seededOnchainData.protocolBurns[0]?.burnTx || "0x271661972466136df0a72126123abbb1cd452a27df426cffbd4314d8a4ec691f",
     },
     {
-      amount: "1,200",
-      gig: "Port OpenZeppelin Governor (#3)",
-      time: "18m ago",
-      tx: "0x1dda7be805b72c51de0975c2997eb5ad1a709b5226064d5d6f1c89c85c6a24ce",
+      amount: "300",
+      gig: "Genesis Protocol Burn Pool Initialization",
+      time: "Block #64070002",
+      tx: "0xd53917e92336cb87b1c4b711e7ba259be2466f244199f36b6f04baeb27a2fbdf",
     },
     {
-      amount: "450",
-      gig: "Monad Metropolis Community Edit (#5)",
-      time: "2h ago",
-      tx: "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
+      amount: "25",
+      gig: "Parallel EVM Benchmark Escrow Fee Burn (Gig #23)",
+      time: "Block #64156452",
+      tx: seededOnchainData.completedGigs[0]?.payoutTx || "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
     },
     {
-      amount: "2,500",
-      gig: "Weekly Escrow Fee Batch Sweep",
-      time: "1d ago",
-      tx: "0x26d5bbd83d5188ecbb9660be9a70b07db8008c34620a7c87f04930c22983322e",
+      amount: "12",
+      gig: "Alchemy Multi-Transport Escrow Fee Burn (Gig #24)",
+      time: "Block #64156469",
+      tx: seededOnchainData.completedGigs[1]?.payoutTx || "0xafc8d609315d0052a556d1ae9d9bb541da2673796ec267684a3d12d0f7224e63",
     },
   ]);
 
