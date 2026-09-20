@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
 name: proof-of-hustle-indexer
 description: Real-time event indexer for ProofOfHustle protocol on Monad Testnet
 
@@ -5,36 +6,41 @@ field_selection:
   transaction_fields:
     - hash
 
-networks:
+contracts:
+  - name: GigEscrow
+    handler: src/EventHandlers.ts
+    events:
+      - event: "GigCreated(uint256 indexed gigId, address indexed creator, address indexed token, uint256 rewardAmount, uint8 gigType, bool isSealed, uint256 deadline, string metadataCid)"
+      - event: "TaskClaimed(uint256 indexed gigId, address indexed hustler)"
+      - event: "WorkSubmitted(uint256 indexed gigId, uint256 indexed submissionId, address indexed hustler, bool isSealed)"
+      - event: "PayoutReleased(uint256 indexed gigId, address indexed hustler, uint256 payoutAmount, uint8 rating)"
+      - event: "PayoutAutoReleased(uint256 indexed gigId, address indexed hustler, uint256 payoutAmount, uint256 timestamp)"
+      - event: "HypeStaked(uint256 indexed gigId, address indexed curator, uint256 amount, uint256 totalHype)"
+      - event: "HypeUnstaked(uint256 indexed gigId, address indexed curator, uint256 amount)"
+      - event: "EarlyCuratorRegistered(uint256 indexed gigId, address indexed curator, uint256 rank)"
+      - event: "DisputeRaised(uint256 indexed gigId, address indexed initiator, string reasonCid)"
+      - event: "DisputeResolved(uint256 indexed gigId, address indexed winner, uint256 payout)"
+  - name: ProofOfHustleSBT
+    handler: src/EventHandlers.ts
+    events:
+      - event: "ProofMinted(uint256 indexed tokenId, uint256 indexed gigId, address indexed hustler, address creator, uint256 payoutAmount, uint8 rating, string deliverableCid)"
+  - name: ProtocolBurnPool
+    handler: src/EventHandlers.ts
+    events:
+      - event: "TokensBurned(uint256 amount, uint256 totalBurnedToDate, uint256 timestamp)"
+
+chains:
   - id: 10143
-    rpc_config:
-      url: https://testnet-rpc.monad.xyz
     start_block: 64066800
+    rpc:
+      - url: https://testnet-rpc.monad.xyz
     contracts:
       - name: GigEscrow
         address:
           - "0x9ebE2bd656F9d4C158dE698284329a5F2994Beb5"
-        handler: src/EventHandlers.ts
-        events:
-          - event: GigCreated(uint256 indexed gigId, address indexed creator, address indexed token, uint256 rewardAmount, uint8 gigType, bool isSealed, uint256 deadline, string metadataCid)
-          - event: TaskClaimed(uint256 indexed gigId, address indexed hustler)
-          - event: WorkSubmitted(uint256 indexed gigId, uint256 indexed submissionId, address indexed hustler, bool isSealed)
-          - event: PayoutReleased(uint256 indexed gigId, address indexed hustler, uint256 payoutAmount, uint8 rating)
-          - event: PayoutAutoReleased(uint256 indexed gigId, address indexed hustler, uint256 payoutAmount, uint256 timestamp)
-          - event: HypeStaked(uint256 indexed gigId, address indexed curator, uint256 amount, uint256 totalHype)
-          - event: HypeUnstaked(uint256 indexed gigId, address indexed curator, uint256 amount)
-          - event: EarlyCuratorRegistered(uint256 indexed gigId, address indexed curator, uint256 rank)
-          - event: DisputeRaised(uint256 indexed gigId, address indexed initiator, string reasonCid)
-          - event: DisputeResolved(uint256 indexed gigId, address indexed winner, uint256 payout)
       - name: ProofOfHustleSBT
         address:
           - "0xf84666CbA55368E8F2bE2134e20AFc89027f33b2"
-        handler: src/EventHandlers.ts
-        events:
-          - event: ProofMinted(uint256 indexed tokenId, uint256 indexed gigId, address indexed hustler, address creator, uint256 payoutAmount, uint8 rating, string deliverableCid)
       - name: ProtocolBurnPool
         address:
           - "0xef73DfFdD7795CFe57839f7493D452cf534B506c"
-        handler: src/EventHandlers.ts
-        events:
-          - event: TokensBurned(uint256 amount, uint256 totalBurnedToDate, uint256 timestamp)
