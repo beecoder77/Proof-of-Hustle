@@ -97,7 +97,9 @@ export async function POST(req: NextRequest) {
         }
 
         const stakeAmount = amount
-          ? BigInt(amount)
+          ? (typeof amount === "string" && !amount.includes("00000000000000")
+              ? parseUnits(amount.replace(/,/g, ""), 18)
+              : BigInt(amount))
           : parseUnits("100", 18); // 100 $HUSTLE default
 
         // 1. Check & Approve $HUSTLE allowance to gigEscrow
@@ -197,7 +199,9 @@ export async function POST(req: NextRequest) {
         const { to, amount } = params || {};
         const recipient = (to || account.address) as `0x${string}`;
         const mintAmount = amount
-          ? BigInt(amount)
+          ? (typeof amount === "string" && !amount.includes("00000000000000")
+              ? parseUnits(amount.replace(/,/g, ""), 18)
+              : BigInt(amount))
           : parseUnits("1000", 18); // 1,000 USDT
 
         txHash = await walletClient.writeContract({
@@ -213,7 +217,9 @@ export async function POST(req: NextRequest) {
         const { to, amount } = params || {};
         const recipient = (to || account.address) as `0x${string}`;
         const transferAmount = amount
-          ? BigInt(amount)
+          ? (typeof amount === "string" && !amount.includes("00000000000000")
+              ? parseUnits(amount.replace(/,/g, ""), 18)
+              : BigInt(amount))
           : parseUnits("500", 18); // 500 $HUSTLE
 
         txHash = await walletClient.writeContract({
@@ -271,7 +277,9 @@ export async function POST(req: NextRequest) {
       case "burnHustle": {
         const { amount } = params || {};
         const burnAmount = amount
-          ? BigInt(amount)
+          ? (typeof amount === "string" && !amount.includes("00000000000000")
+              ? parseUnits(amount.replace(/,/g, ""), 18)
+              : BigInt(amount))
           : parseUnits("150", 18); // 150 $HUSTLE default burn
 
         // 1. Relayer transfers $HUSTLE to ProtocolBurnPool contract
