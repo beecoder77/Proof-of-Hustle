@@ -28,7 +28,8 @@ export function LiveTelemetryBar({
         const start = performance.now();
         const rpcUrl =
           process.env.NEXT_PUBLIC_MONAD_RPC_URL ||
-          "https://monad-testnet.g.alchemy.com/v2/your_alchemy_api_key_here";
+          process.env.NEXT_PUBLIC_ALCHEMY_RPC ||
+          "https://testnet-rpc.monad.xyz";
 
         const res = await fetch(rpcUrl, {
           method: "POST",

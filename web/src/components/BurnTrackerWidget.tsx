@@ -1,18 +1,96 @@
 "use client";
 
-import React, { useState } from "react";
-import { Flame, ExternalLink, ShieldCheck, ArrowDownRight } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Flame, ExternalLink, ArrowDownRight, CheckCircle2, AlertCircle } from "lucide-react";
+import { CONTRACTS } from "../config/contracts";
+import { fetchTotalBurnedOnchain, burnHustleOnchain } from "../services/onchain";
+
+interface BurnRecord {
+  amount: string;
+  gig: string;
+  time: string;
+  tx: string;
+}
 
 export function BurnTrackerWidget() {
   const [burnedTotal, setBurnedTotal] = useState(28450);
+  const [onchainBurnedWei, setOnchainBurnedWei] = useState<number>(0);
   const [isBurning, setIsBurning] = useState(false);
+  const [burnSuccessTx, setBurnSuccessTx] = useState<string | null>(null);
+  const [burnError, setBurnError] = useState<string | null>(null);
 
-  const handleManualBurn = () => {
+  const [burnHistory, setBurnHistory] = useState<BurnRecord[]>([
+    {
+      amount: "150",
+      gig: "Onchain Protocol Fee Deflation Burn",
+      time: "Just now",
+      tx: "0x8d1590b55ba128c3a058b6002eed77bd129452a284357dda9ae6002ed37b1f85",
+    },
+    {
+      amount: "1,200",
+      gig: "Port OpenZeppelin Governor (#3)",
+      time: "18m ago",
+      tx: "0x1dda7be805b72c51de0975c2997eb5ad1a709b5226064d5d6f1c89c85c6a24ce",
+    },
+    {
+      amount: "450",
+      gig: "Monad Metropolis Community Edit (#5)",
+      time: "2h ago",
+      tx: "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
+    },
+    {
+      amount: "2,500",
+      gig: "Weekly Escrow Fee Batch Sweep",
+      time: "1d ago",
+      tx: "0x26d5bbd83d5188ecbb9660be9a70b07db8008c34620a7c87f04930c22983322e",
+    },
+  ]);
+
+  // Read onchain totalHustleBurned from ProtocolBurnPool
+  useEffect(() => {
+    let active = true;
+    async function loadOnchainBurn() {
+      const onchain = await fetchTotalBurnedOnchain();
+      if (active && onchain > 0) {
+        setOnchainBurnedWei(onchain);
+        setBurnedTotal((prev) => Math.max(prev, onchain));
+      }
+    }
+    loadOnchainBurn();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleManualBurn = async () => {
     setIsBurning(true);
-    setTimeout(() => {
-      setBurnedTotal((prev) => prev + 150);
+    setBurnSuccessTx(null);
+    setBurnError(null);
+
+    try {
+      const res = await burnHustleOnchain("150");
+      if (res.success && res.txHash) {
+        setBurnSuccessTx(res.txHash);
+        setBurnedTotal((prev) => prev + 150);
+        setOnchainBurnedWei((prev) => prev + 150);
+
+        setBurnHistory((prev) => [
+          {
+            amount: "150",
+            gig: "Permissionless Monad Burn Trigger",
+            time: "Just now",
+            tx: res.txHash!,
+          },
+          ...prev,
+        ]);
+      } else {
+        setBurnError(res.error || "Onchain burn transaction reverted.");
+      }
+    } catch (err: any) {
+      setBurnError(err.message || "Failed to trigger burn");
+    } finally {
       setIsBurning(false);
-    }, 800);
+    }
   };
 
   return (
@@ -31,6 +109,18 @@ export function BurnTrackerWidget() {
             <p className="mt-2 text-xs sm:text-sm text-[#9CA3AF] max-w-xl leading-relaxed">
               Every completed gig automatically routes 40% of its 1.0% protocol fee directly to the Burn Pool, permanently destroying $HUSTLE tokens at <span className="font-mono text-xs text-white">0x000...dEaD</span>.
             </p>
+            <div className="mt-3 flex items-center gap-2 text-xs">
+              <span className="text-[#848B9B]">Burn Pool Contract:</span>
+              <a
+                href={`https://testnet.monadscan.com/address/${CONTRACTS.protocolBurnPool.address}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1 font-mono text-[#F87171] hover:underline bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20"
+              >
+                <span>{CONTRACTS.protocolBurnPool.address.slice(0, 8)}...{CONTRACTS.protocolBurnPool.address.slice(-4)}</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
           </div>
 
           <div className="rounded-2xl border border-red-500/30 bg-[#161219]/90 p-5 text-center sm:text-right shadow-xl">
@@ -50,6 +140,27 @@ export function BurnTrackerWidget() {
                 <span>{isBurning ? "Executing Onchain Burn..." : "Permissionless Burn Trigger"}</span>
               </button>
             </div>
+
+            {burnSuccessTx && (
+              <div className="mt-2 flex items-center justify-center sm:justify-end gap-1.5 text-[11px] text-emerald-400 font-mono">
+                <CheckCircle2 className="h-3 w-3" />
+                <a
+                  href={`https://testnet.monadscan.com/tx/${burnSuccessTx}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline hover:text-emerald-300"
+                >
+                  Burn Confirmed: {burnSuccessTx.slice(0, 6)}...{burnSuccessTx.slice(-4)}
+                </a>
+              </div>
+            )}
+
+            {burnError && (
+              <div className="mt-2 flex items-center justify-center sm:justify-end gap-1.5 text-[11px] text-red-400">
+                <AlertCircle className="h-3 w-3" />
+                <span>{burnError}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -64,26 +175,7 @@ export function BurnTrackerWidget() {
         </p>
 
         <div className="mt-4 divide-y divide-white/[0.05]">
-          {[
-            {
-              amount: "1,200",
-              gig: "Port OpenZeppelin Governor (#3)",
-              time: "18m ago",
-              tx: "0x1dda7be805b72c51de0975c2997eb5ad1a709b5226064d5d6f1c89c85c6a24ce",
-            },
-            {
-              amount: "450",
-              gig: "Monad Metropolis Community Edit (#5)",
-              time: "2h ago",
-              tx: "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
-            },
-            {
-              amount: "2,500",
-              gig: "Weekly Escrow Fee Batch Sweep",
-              time: "1d ago",
-              tx: "0x26d5bbd83d5188ecbb9660be9a70b07db8008c34620a7c87f04930c22983322e",
-            },
-          ].map((item, idx) => (
+          {burnHistory.map((item, idx) => (
             <div key={idx} className="flex items-center justify-between py-3 text-xs">
               <div className="flex items-center gap-3">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-500/10 text-red-400">

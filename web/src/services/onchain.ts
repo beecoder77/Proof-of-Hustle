@@ -196,6 +196,45 @@ export async function createGigOnchain(
   });
 }
 
+/**
+ * Fetch total $HUSTLE burned directly from ProtocolBurnPool onchain
+ */
+export async function fetchTotalBurnedOnchain(): Promise<number> {
+  try {
+    const res = await fetch(RPC_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "eth_call",
+        params: [
+          {
+            to: CONTRACTS.protocolBurnPool.address,
+            data: "0x07163038", // totalHustleBurned()
+          },
+          "latest",
+        ],
+        id: 102,
+      }),
+    });
+    const json = await res.json();
+    if (json.result && json.result !== "0x") {
+      const wei = BigInt(json.result);
+      return Number(wei / BigInt(10 ** 18));
+    }
+  } catch (err) {
+    console.warn("fetchTotalBurnedOnchain failed:", err);
+  }
+  return 0;
+}
+
+/**
+ * Execute permissionless burn of $HUSTLE onchain
+ */
+export async function burnHustleOnchain(amount?: string): Promise<RelayResponse> {
+  return callRelayApi("burnHustle", { amount });
+}
+
 async function callRelayApi(action: string, params: any): Promise<RelayResponse> {
   try {
     const res = await fetch("/api/relay", {

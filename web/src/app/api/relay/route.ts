@@ -268,6 +268,31 @@ export async function POST(req: NextRequest) {
         break;
       }
 
+      case "burnHustle": {
+        const { amount } = params || {};
+        const burnAmount = amount
+          ? BigInt(amount)
+          : parseUnits("150", 18); // 150 $HUSTLE default burn
+
+        // 1. Relayer transfers $HUSTLE to ProtocolBurnPool contract
+        const transferTx = await walletClient.writeContract({
+          address: CONTRACTS.hustleToken.address,
+          abi: CONTRACTS.hustleToken.abi,
+          functionName: "transfer",
+          args: [CONTRACTS.protocolBurnPool.address, burnAmount],
+        });
+        await publicClient.waitForTransactionReceipt({ hash: transferTx });
+
+        // 2. Permissionless trigger to burn the received $HUSTLE permanently
+        txHash = await walletClient.writeContract({
+          address: CONTRACTS.protocolBurnPool.address,
+          abi: CONTRACTS.protocolBurnPool.abi,
+          functionName: "burnHeldHustle",
+          args: [],
+        });
+        break;
+      }
+
       default:
         return NextResponse.json(
           { success: false, error: `Unknown action: ${action}` },
