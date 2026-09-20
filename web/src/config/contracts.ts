@@ -4,6 +4,7 @@ import HustleTokenAbi from "../abis/HustleToken.json";
 import ProofOfHustleSBTAbi from "../abis/ProofOfHustleSBT.json";
 import ProtocolBurnPoolAbi from "../abis/ProtocolBurnPool.json";
 import MockERC20Abi from "../abis/MockERC20.json";
+import HustlerProfileRegistryAbi from "../abis/HustlerProfileRegistry.json";
 
 export const monadTestnet = defineChain({
   id: 10143,
@@ -60,5 +61,10 @@ export const CONTRACTS = {
     address: (process.env.NEXT_PUBLIC_MOCK_USDT_ADDRESS ||
       "0x0Ba9DA718Adfa048f4EF9F2BF1afe9A5E4077637") as `0x${string}`,
     abi: MockERC20Abi,
+  },
+  profileRegistry: {
+    address: (process.env.NEXT_PUBLIC_PROFILE_REGISTRY_ADDRESS ||
+      "0x6781Dd555313828f570F84e13ECa8684081E1B6D") as `0x${string}`,
+    abi: HustlerProfileRegistryAbi,
   },
 } as const;

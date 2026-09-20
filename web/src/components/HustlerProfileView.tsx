@@ -20,9 +20,16 @@ import {
   ArrowUpRight,
   Shield,
   User,
+  Loader2,
 } from "lucide-react";
 import { CONTRACTS } from "../config/contracts";
 import { encodeFunctionData, parseAbi } from "viem";
+import {
+  fetchProfileOnchain,
+  registerHandleOnchain,
+  claimUsdtFaucetOnchain,
+  claimHustleAirdropOnchain,
+} from "../services/onchain";
 
 interface HustlerProfileViewProps {
   currentUserAddress: string;
@@ -35,6 +42,14 @@ const ERC20_BALANCE_ABI = parseAbi([
   "function balanceOf(address owner) view returns (uint256)",
   "function decimals() view returns (uint8)",
 ]);
+
+interface OnchainTxRecord {
+  type: string;
+  label: string;
+  amount: string;
+  block: string;
+  txHash: string;
+}
 
 export function HustlerProfileView({
   currentUserAddress,
@@ -50,7 +65,9 @@ export function HustlerProfileView({
     }
     return currentUsername || `hustler_${currentUserAddress.slice(2, 6)}`;
   });
+  const [isOnchainVerifiedHandle, setIsOnchainVerifiedHandle] = useState<boolean>(false);
   const [isEditingUsername, setIsEditingUsername] = useState(false);
+  const [isRegisteringHandle, setIsRegisteringHandle] = useState(false);
   const [tempUsername, setTempUsername] = useState(username);
   const [usernameError, setUsernameError] = useState("");
   const [copiedAddress, setCopiedAddress] = useState(false);
@@ -62,6 +79,59 @@ export function HustlerProfileView({
   const [isLoadingBalances, setIsLoadingBalances] = useState(false);
   const [isMintingUsdt, setIsMintingUsdt] = useState(false);
   const [isClaimingHustle, setIsClaimingHustle] = useState(false);
+
+  // Dynamic Onchain Ledger History
+  const [recentTransactions, setRecentTransactions] = useState<OnchainTxRecord[]>([
+    {
+      type: "DEPLOY_SEED",
+      label: "Genesis Protocol Escrow & 20 Ecosystem Bounties Seeded",
+      amount: "+20,000,000 $HUSTLE",
+      block: "64,066,829",
+      txHash: "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
+    },
+    {
+      type: "MINT_SBT",
+      label: "ERC-5192 Soulbound Credential #1 Minted",
+      amount: "POH-SBT #1",
+      block: "64,066,830",
+      txHash: "0x26d5bbd83d5188ecbb9660be9a70b07db8008c34620a7c87f04930c22983322e",
+    },
+    {
+      type: "REGISTRY_DEPLOY",
+      label: "HustlerProfileRegistry Deployed & Initial Handle Bound",
+      amount: "0.00 MON Gas",
+      block: "64,074,121",
+      txHash: "0x1cada7517635137855f2387eb1f5523a272061445370fb913195dad588b5b0a8",
+    },
+  ]);
+
+  // Read Profile Handle directly from Monad Testnet Smart Contract
+  useEffect(() => {
+    let active = true;
+    async function checkOnchainProfile() {
+      if (!currentUserAddress) return;
+      try {
+        const onchain = await fetchProfileOnchain(currentUserAddress);
+        if (onchain && onchain.handle && active) {
+          setUsername(onchain.handle);
+          setIsOnchainVerifiedHandle(true);
+          onUpdateUsername?.(onchain.handle);
+          if (typeof window !== "undefined") {
+            localStorage.setItem(
+              `poh_username_${currentUserAddress.toLowerCase()}`,
+              onchain.handle
+            );
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch onchain profile:", err);
+      }
+    }
+    checkOnchainProfile();
+    return () => {
+      active = false;
+    };
+  }, [currentUserAddress, onUpdateUsername]);
 
   // Fetch Onchain Balances directly from Monad Testnet RPC
   const fetchOnchainBalances = useCallback(async () => {
@@ -156,33 +226,66 @@ export function HustlerProfileView({
     fetchOnchainBalances();
   }, [fetchOnchainBalances]);
 
-  // Handle Save Username
-  const handleSaveUsername = (e: React.FormEvent) => {
+  // Handle Save Username — 100% REAL ONCHAIN TRANSACTION on Monad Testnet
+  const handleSaveUsername = async (e: React.FormEvent) => {
     e.preventDefault();
     const clean = tempUsername.trim().replace(/^@/, "");
     if (clean.length < 3) {
       setUsernameError("Username must be at least 3 characters");
       return;
     }
+    if (clean.length > 24) {
+      setUsernameError("Username cannot exceed 24 characters");
+      return;
+    }
     if (!/^[a-zA-Z0-9_.]+$/.test(clean)) {
-      setUsernameError("Only letters, numbers, underscores, and dots allowed");
+      setUsernameError("Only alphanumeric characters, underscores, and dots allowed");
       return;
     }
 
     const finalName = `@${clean}`;
-    setUsername(finalName);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(`poh_username_${currentUserAddress.toLowerCase()}`, finalName);
-    }
-    onUpdateUsername?.(finalName);
-    setIsEditingUsername(false);
+    setIsRegisteringHandle(true);
     setUsernameError("");
 
-    onTriggerToast?.(
-      "Profile Identity Updated",
-      `Your handle is now ${finalName} across ProofOfHustle.`,
-      "0x" + Math.random().toString(16).slice(2).padStart(64, "0")
-    );
+    try {
+      // Execute REAL ONCHAIN call to HustlerProfileRegistry
+      const res = await registerHandleOnchain(currentUserAddress, clean);
+
+      if (res.success && res.txHash) {
+        setUsername(finalName);
+        setIsOnchainVerifiedHandle(true);
+        if (typeof window !== "undefined") {
+          localStorage.setItem(`poh_username_${currentUserAddress.toLowerCase()}`, finalName);
+        }
+        onUpdateUsername?.(finalName);
+        setIsEditingUsername(false);
+
+        // Prepend real onchain transaction
+        setRecentTransactions((prev) => [
+          {
+            type: "REGISTER_HANDLE",
+            label: `Onchain Handle Registered (${finalName})`,
+            amount: "0.00 MON Gas",
+            block: res.blockNumber || "Pending",
+            txHash: res.txHash!,
+          },
+          ...prev,
+        ]);
+
+        onTriggerToast?.(
+          "Handle Registered Onchain!",
+          `Handle ${finalName} permanently recorded on Monad Testnet (Block #${res.blockNumber || ""}).`,
+          res.txHash
+        );
+      } else {
+        setUsernameError(res.error || "Failed to broadcast registration transaction");
+      }
+    } catch (err: any) {
+      console.error("Handle registration failed:", err);
+      setUsernameError(err.message || "Onchain transaction failed. Please retry.");
+    } finally {
+      setIsRegisteringHandle(false);
+    }
   };
 
   const handleCopyAddress = () => {
@@ -191,37 +294,67 @@ export function HustlerProfileView({
     setTimeout(() => setCopiedAddress(false), 2000);
   };
 
-  // 1-Click Faucet Claim Handlers
-  const handleClaimUsdtFaucet = () => {
+  // Real 1-Click Faucet Claim Handlers on Monad Testnet
+  const handleClaimUsdtFaucet = async () => {
     setIsMintingUsdt(true);
-    setTimeout(() => {
+    try {
+      const res = await claimUsdtFaucetOnchain(currentUserAddress);
+      if (res.success && res.txHash) {
+        await fetchOnchainBalances();
+        setRecentTransactions((prev) => [
+          {
+            type: "FAUCET_USDT",
+            label: "+1,000 Mock USDT Minted (Collateral Faucet)",
+            amount: "+1,000 USDT",
+            block: res.blockNumber || "Current",
+            txHash: res.txHash!,
+          },
+          ...prev,
+        ]);
+        onTriggerToast?.(
+          "+1,000 USDT Testnet Faucet Minted",
+          `Collateral minted on Monad Testnet (Block #${res.blockNumber || ""}).`,
+          res.txHash
+        );
+      } else {
+        onTriggerToast?.("Faucet Error", res.error || "Unable to mint USDT", "");
+      }
+    } catch (err: any) {
+      console.error("USDT Faucet failed:", err);
+    } finally {
       setIsMintingUsdt(false);
-      setUsdtBalance((prev) => {
-        const cur = parseFloat(prev.replace(/,/g, "")) || 0;
-        return (cur + 1000).toLocaleString();
-      });
-      onTriggerToast?.(
-        "+1,000 USDT Testnet Faucet Claimed",
-        "Escrow settlement collateral credited on Monad Testnet.",
-        "0x" + Math.random().toString(16).slice(2).padStart(64, "0")
-      );
-    }, 800);
+    }
   };
 
-  const handleClaimHustleAirdrop = () => {
+  const handleClaimHustleAirdrop = async () => {
     setIsClaimingHustle(true);
-    setTimeout(() => {
+    try {
+      const res = await claimHustleAirdropOnchain(currentUserAddress);
+      if (res.success && res.txHash) {
+        await fetchOnchainBalances();
+        setRecentTransactions((prev) => [
+          {
+            type: "AIRDROP_HUSTLE",
+            label: "+500 $HUSTLE Attention Grant Transferred",
+            amount: "+500 $HUSTLE",
+            block: res.blockNumber || "Current",
+            txHash: res.txHash!,
+          },
+          ...prev,
+        ]);
+        onTriggerToast?.(
+          "+500 $HUSTLE Attention Staking Grant",
+          `Grant transferred on Monad Testnet (Block #${res.blockNumber || ""}).`,
+          res.txHash
+        );
+      } else {
+        onTriggerToast?.("Airdrop Error", res.error || "Unable to claim $HUSTLE", "");
+      }
+    } catch (err: any) {
+      console.error("HUSTLE Faucet failed:", err);
+    } finally {
       setIsClaimingHustle(false);
-      setHustleBalance((prev) => {
-        const cur = parseFloat(prev.replace(/,/g, "")) || 0;
-        return (cur + 500).toLocaleString();
-      });
-      onTriggerToast?.(
-        "+500 $HUSTLE Attention Staking Grants",
-        "Genesis community airdrop credited to your wallet.",
-        "0x" + Math.random().toString(16).slice(2).padStart(64, "0")
-      );
-    }, 800);
+    }
   };
 
   const badges = [
@@ -254,30 +387,6 @@ export function HustlerProfileView({
     },
   ];
 
-  const recentTransactions = [
-    {
-      type: "DEPLOY_SEED",
-      label: "Genesis Protocol Escrow & 20 Ecosystem Bounties Seeded",
-      amount: "+20,000,000 $HUSTLE",
-      block: "64,066,829",
-      txHash: "0x3146545c95ab143ff07a0f0fa4293ecabd414b6e72d3a650e1b9f55c56095098",
-    },
-    {
-      type: "MINT_SBT",
-      label: "ERC-5192 Soulbound Credential #1 Minted",
-      amount: "POH-SBT #1",
-      block: "64,066,830",
-      txHash: "0x26d5bbd83d5188ecbb9660be9a70b07db8008c34620a7c87f04930c22983322e",
-    },
-    {
-      type: "STAKE_HYPE",
-      label: "Attention Futures Staking (+100 $HUSTLE locked)",
-      amount: "-100 $HUSTLE",
-      block: "64,066,831",
-      txHash: "0x6311b503b47c3a995c7b5d1e00509a81b8c127acde85bf3d60155f9e5abae9ad",
-    },
-  ];
-
   return (
     <div className="space-y-6">
       {/* Profile Header & Custom Username Banner */}
@@ -303,15 +412,22 @@ export function HustlerProfileView({
                     setTempUsername(username);
                     setIsEditingUsername(true);
                   }}
-                  title="Customize Username"
-                  className="flex items-center gap-1 rounded-lg border border-white/[0.1] bg-[#1B1E2B] px-2 py-1 text-xs text-[#848B9B] hover:text-white hover:border-[#7C5CFC] transition-colors"
+                  title="Customize Username Onchain"
+                  className="flex items-center gap-1 rounded-lg border border-white/[0.1] bg-[#1B1E2B] px-2.5 py-1 text-xs text-[#848B9B] hover:text-white hover:border-[#7C5CFC] active:scale-[0.98] transition-all"
                 >
-                  <Edit3 className="h-3 w-3" />
+                  <Edit3 className="h-3 w-3 text-[#7C5CFC]" />
                   <span>Edit Handle</span>
                 </button>
-                <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-[#34D399]">
-                  Verified Builder
-                </span>
+                {isOnchainVerifiedHandle ? (
+                  <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-[#34D399] flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Onchain Verified
+                  </span>
+                ) : (
+                  <span className="rounded-full border border-[#7C5CFC]/25 bg-[#7C5CFC]/10 px-2.5 py-0.5 text-[10px] font-semibold text-[#A78BFA]">
+                    Syncing Onchain
+                  </span>
+                )}
               </div>
 
               {/* Wallet Address Copy Pill */}
@@ -359,8 +475,12 @@ export function HustlerProfileView({
               disabled={isMintingUsdt}
               className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-[#34D399] hover:bg-emerald-500/20 active:scale-[0.98] transition-all disabled:opacity-50"
             >
-              <Coins className="h-3.5 w-3.5" />
-              <span>{isMintingUsdt ? "Minting..." : "+1,000 Mock USDT"}</span>
+              {isMintingUsdt ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Coins className="h-3.5 w-3.5" />
+              )}
+              <span>{isMintingUsdt ? "Minting Onchain..." : "+1,000 Mock USDT"}</span>
             </button>
 
             <button
@@ -368,8 +488,12 @@ export function HustlerProfileView({
               disabled={isClaimingHustle}
               className="flex items-center justify-center gap-1.5 rounded-xl border border-[#7C5CFC]/30 bg-[#7C5CFC]/15 px-3.5 py-2 text-xs font-semibold text-[#A78BFA] hover:bg-[#7C5CFC]/25 active:scale-[0.98] transition-all disabled:opacity-50"
             >
-              <Zap className="h-3.5 w-3.5" />
-              <span>{isClaimingHustle ? "Claiming..." : "+500 $HUSTLE Airdrop"}</span>
+              {isClaimingHustle ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Zap className="h-3.5 w-3.5" />
+              )}
+              <span>{isClaimingHustle ? "Transferring Onchain..." : "+500 $HUSTLE Airdrop"}</span>
             </button>
           </div>
         </div>
@@ -387,7 +511,7 @@ export function HustlerProfileView({
             <button
               onClick={fetchOnchainBalances}
               title="Refresh balances"
-              className="rounded p-1 text-[#848B9B] hover:text-white"
+              className="rounded p-1 text-[#848B9B] hover:text-white active:scale-[0.95]"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isLoadingBalances ? "animate-spin" : ""}`} />
             </button>
@@ -548,7 +672,7 @@ export function HustlerProfileView({
       {isEditingUsername && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            onClick={() => setIsEditingUsername(false)}
+            onClick={() => !isRegisteringHandle && setIsEditingUsername(false)}
             className="absolute inset-0 bg-black/75 backdrop-blur-md animate-backdrop-fade cursor-pointer"
           />
 
@@ -556,11 +680,12 @@ export function HustlerProfileView({
             <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
               <div className="flex items-center gap-2">
                 <User className="h-4 w-4 text-[#7C5CFC]" />
-                <h3 className="font-bold text-white text-base">Customize Builder Handle</h3>
+                <h3 className="font-bold text-white text-base">Register Onchain Handle</h3>
               </div>
               <button
-                onClick={() => setIsEditingUsername(false)}
-                className="rounded-lg p-1 text-[#848B9B] hover:text-white"
+                onClick={() => !isRegisteringHandle && setIsEditingUsername(false)}
+                disabled={isRegisteringHandle}
+                className="rounded-lg p-1 text-[#848B9B] hover:text-white disabled:opacity-30"
               >
                 ✕
               </button>
@@ -577,37 +702,53 @@ export function HustlerProfileView({
                   </span>
                   <input
                     type="text"
+                    disabled={isRegisteringHandle}
                     value={tempUsername.replace(/^@/, "")}
                     onChange={(e) => {
                       setTempUsername(e.target.value);
                       setUsernameError("");
                     }}
                     placeholder="nad_builder"
-                    className="w-full rounded-xl border border-white/[0.1] bg-[#1B1E2B] pl-8 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-[#7C5CFC] focus:outline-none font-medium"
+                    className="w-full rounded-xl border border-white/[0.1] bg-[#1B1E2B] pl-8 pr-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-[#7C5CFC] focus:outline-none font-medium disabled:opacity-50"
                     autoFocus
                   />
                 </div>
                 {usernameError && (
                   <p className="mt-1 text-xs text-[#F87171]">{usernameError}</p>
                 )}
-                <p className="mt-1.5 text-[11px] text-[#848B9B]">
-                  Your username will be displayed on the Live Feed, Gigs, and Soulbound Certificates.
-                </p>
+                <div className="mt-2 rounded-lg border border-white/[0.06] bg-[#0E1015]/60 p-2.5 text-[11px] text-[#848B9B] space-y-1">
+                  <p className="text-white font-medium flex items-center gap-1">
+                    <Shield className="h-3 w-3 text-[#7C5CFC]" />
+                    Verified Monad Testnet Smart Contract
+                  </p>
+                  <p>
+                    Handle will be permanently reserved on <span className="font-mono text-[#A78BFA]">0x6781...1B6D</span> with sub-400ms finality.
+                  </p>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
+                  disabled={isRegisteringHandle}
                   onClick={() => setIsEditingUsername(false)}
-                  className="rounded-xl border border-white/[0.08] px-4 py-2 text-xs font-semibold text-[#9CA3AF] hover:text-white"
+                  className="rounded-xl border border-white/[0.08] px-4 py-2 text-xs font-semibold text-[#9CA3AF] hover:text-white disabled:opacity-40"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="rounded-xl bg-[#7C5CFC] px-5 py-2 text-xs font-semibold text-white hover:bg-[#9073FD] shadow-md shadow-[#7C5CFC]/20 active:scale-[0.98] transition-all"
+                  disabled={isRegisteringHandle}
+                  className="flex items-center gap-1.5 rounded-xl bg-[#7C5CFC] px-5 py-2 text-xs font-semibold text-white hover:bg-[#9073FD] shadow-md shadow-[#7C5CFC]/20 active:scale-[0.98] transition-all disabled:opacity-50"
                 >
-                  Save Handle
+                  {isRegisteringHandle ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Broadcasting (~400ms)...</span>
+                    </>
+                  ) : (
+                    <span>Save Onchain</span>
+                  )}
                 </button>
               </div>
             </form>
