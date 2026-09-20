@@ -22,12 +22,51 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { CONTRACTS } from "../config/contracts";
+import { formatUnits } from "viem";
+import { publicClient, fetchLiveBurnData } from "../services/onchainFeed";
 
 export function TokenomicsView() {
   const [copied, setCopied] = useState(false);
   const [monthlyVolume, setMonthlyVolume] = useState(1_000_000); // $1M monthly volume default
   const [stakedAmount, setStakedAmount] = useState(10_000); // 10k HUSTLE staked default
   const [activeTab, setActiveTab] = useState<"overview" | "allocations" | "simulator" | "vesting">("overview");
+
+  const [liveTotalSupply, setLiveTotalSupply] = useState<string>("20,000,000");
+  const [liveBurnedAmount, setLiveBurnedAmount] = useState<string>("769");
+  const [isLiveLoaded, setIsLiveLoaded] = useState(false);
+
+  React.useEffect(() => {
+    let active = true;
+    async function loadTokenStats() {
+      try {
+        const [supplyWei, burnData] = await Promise.all([
+          publicClient.readContract({
+            address: CONTRACTS.hustleToken.address,
+            abi: CONTRACTS.hustleToken.abi,
+            functionName: "totalSupply",
+          }),
+          fetchLiveBurnData(),
+        ]);
+
+        if (active) {
+          const supplyNum = parseFloat(formatUnits(supplyWei as bigint, 18));
+          if (supplyNum > 0) {
+            setLiveTotalSupply(Math.round(supplyNum).toLocaleString());
+          }
+          if (burnData.totalBurned > 0) {
+            setLiveBurnedAmount(Math.round(burnData.totalBurned).toLocaleString());
+          }
+          setIsLiveLoaded(true);
+        }
+      } catch (err) {
+        console.warn("Could not load onchain token stats:", err);
+      }
+    }
+    loadTokenStats();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const contractAddress = CONTRACTS.hustleToken.address;
 
@@ -177,19 +216,22 @@ export function TokenomicsView() {
         </div>
 
         <div className="rounded-xl border border-white/[0.08] bg-[#151821] p-5">
-          <span className="block text-xs font-semibold uppercase text-[#848B9B]">Genesis Mint (Deployer)</span>
+          <span className="block text-xs font-semibold uppercase text-[#848B9B]">Circulating Supply</span>
           <span className="mt-1 block font-mono text-xl sm:text-2xl font-bold text-[#34D399] tabular-numbers">
-            20,000,000
+            {liveTotalSupply}
           </span>
-          <span className="text-[11px] text-[#848B9B]">20.00% initial circulation</span>
+          <span className="text-[11px] text-[#848B9B] flex items-center gap-1">
+            {isLiveLoaded && <span className="h-1.5 w-1.5 rounded-full bg-[#10B981] animate-pulse" />}
+            Live Monad Contract
+          </span>
         </div>
 
         <div className="rounded-xl border border-white/[0.08] bg-[#151821] p-5">
-          <span className="block text-xs font-semibold uppercase text-[#848B9B]">Deflationary Burn Sink</span>
+          <span className="block text-xs font-semibold uppercase text-[#848B9B]">Permanently Burned</span>
           <span className="mt-1 block font-mono text-xl sm:text-2xl font-bold text-[#F87171] tabular-numbers">
-            40% of All Fees
+            {liveBurnedAmount} HUSTLE
           </span>
-          <span className="text-[11px] text-[#848B9B]">Permanently burned onchain</span>
+          <span className="text-[11px] text-[#848B9B]">Destroyed at 0x0...dEaD</span>
         </div>
 
         <div className="rounded-xl border border-white/[0.08] bg-[#151821] p-5">

@@ -25,6 +25,7 @@ import {
   claimCurationRewardOnchain,
   unstakeHypeOnchain,
 } from "../services/onchain";
+import { fetchLiveBounties } from "../services/onchainFeed";
 
 interface CommunityBounty {
   id: string;
@@ -171,6 +172,30 @@ export function CommunityBountyHub({
   const [curations, setCurations] = useState<UserCurationPosition[]>(INITIAL_CURATIONS);
   const [isClaimingYield, setIsClaimingYield] = useState<{ [gigId: string]: boolean }>({});
   const [isUnstaking, setIsUnstaking] = useState<{ [gigId: string]: boolean }>({});
+
+  const [isLiveBountiesLoaded, setIsLiveBountiesLoaded] = useState(false);
+
+  // Poll live bounties from Monad Testnet GigEscrow contract
+  React.useEffect(() => {
+    let active = true;
+    async function loadLive() {
+      try {
+        const live = await fetchLiveBounties(8);
+        if (active && live && live.length > 0) {
+          setBounties(live);
+          setIsLiveBountiesLoaded(true);
+        }
+      } catch (err) {
+        console.warn("Could not load live bounties:", err);
+      }
+    }
+    loadLive();
+    const interval = setInterval(loadLive, 15_000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   // Propose Bounty Modal state
   const [isProposeOpen, setIsProposeOpen] = useState(false);
@@ -325,9 +350,17 @@ export function CommunityBountyHub({
       <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-r from-[#1B1E2B] via-[#151821] to-[#1B1E2B] p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div>
-            <div className="inline-flex items-center gap-1.5 rounded-md bg-[#7C5CFC]/15 px-2.5 py-1 text-xs font-semibold text-[#A78BFA] border border-[#7C5CFC]/30">
-              <Users className="h-3.5 w-3.5" />
-              <span>DAO & Community Co-Funding</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex items-center gap-1.5 rounded-md bg-[#7C5CFC]/15 px-2.5 py-1 text-xs font-semibold text-[#A78BFA] border border-[#7C5CFC]/30">
+                <Users className="h-3.5 w-3.5" />
+                <span>DAO & Community Co-Funding</span>
+              </div>
+              {isLiveBountiesLoaded && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-[#34D399]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#10B981] animate-pulse" />
+                  Live Onchain Bounties
+                </span>
+              )}
             </div>
             <h2 className="mt-2 text-2xl sm:text-3xl font-bold text-[#F9FAFB]">
               Community Bounty Hub

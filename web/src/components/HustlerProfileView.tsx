@@ -30,6 +30,7 @@ import {
   claimUsdtFaucetOnchain,
   claimHustleAirdropOnchain,
 } from "../services/onchain";
+import { fetchLiveUserSBTs, OnchainBadge } from "../services/onchainFeed";
 
 interface HustlerProfileViewProps {
   currentUserAddress: string;
@@ -364,7 +365,7 @@ export function HustlerProfileView({
     }
   };
 
-  const badges = [
+  const FALLBACK_BADGES: OnchainBadge[] = [
     {
       id: "1",
       title: "Parallel EVM Storage Slot Collision Benchmark Suite",
@@ -373,6 +374,8 @@ export function HustlerProfileView({
       date: "Sep 2026",
       txHash: "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
       sbtTokenId: "1",
+      gigId: "23",
+      deliverableCid: "bafybeigig_1789912046768_parallel_evm",
     },
     {
       id: "2",
@@ -382,6 +385,8 @@ export function HustlerProfileView({
       date: "Sep 2026",
       txHash: "0xafc8d609315d0052a556d1ae9d9bb541da2673796ec267684a3d12d0f7224e63",
       sbtTokenId: "2",
+      gigId: "24",
+      deliverableCid: "bafybeigig_1789912046768_alchemy_failover",
     },
     {
       id: "3",
@@ -391,8 +396,41 @@ export function HustlerProfileView({
       date: "Sep 2026",
       txHash: "0x79c318b90ad0d6f8a0669dd83f8cfe062d5a601df34e1891a8f160115a65b5c1",
       sbtTokenId: "3",
+      gigId: "25",
+      deliverableCid: "bafybeigig_1789912046768_mera_prf",
     },
   ];
+
+  const [badges, setBadges] = useState<OnchainBadge[]>(FALLBACK_BADGES);
+  const [isOnchainSbtLoaded, setIsOnchainSbtLoaded] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    async function loadSBTs() {
+      if (!currentUserAddress) return;
+      try {
+        const live = await fetchLiveUserSBTs(currentUserAddress);
+        if (active && live && live.length > 0) {
+          setBadges(live);
+          setIsOnchainSbtLoaded(true);
+        }
+      } catch (err) {
+        console.warn("Could not load onchain SBTs:", err);
+      }
+    }
+    loadSBTs();
+    return () => {
+      active = false;
+    };
+  }, [currentUserAddress]);
+
+  const builderLevel = Math.min(5, Math.max(1, badges.length));
+  const builderTier =
+    builderLevel >= 4
+      ? "Grandmaster Craftsman"
+      : builderLevel >= 2
+      ? "Master Craftsman Tier"
+      : "Apprentice Builder";
 
   return (
     <div className="space-y-6">
@@ -404,7 +442,7 @@ export function HustlerProfileView({
             <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border-2 border-[#10B981] bg-gradient-to-tr from-[#1B1E2B] via-[#7C5CFC]/20 to-[#10B981]/20 shadow-xl shadow-[#10B981]/20">
               <Award className="h-10 w-10 text-[#34D399]" />
               <div className="absolute -bottom-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#10B981] text-[10px] font-bold text-black shadow">
-                L3
+                L{builderLevel}
               </div>
             </div>
 
@@ -465,10 +503,12 @@ export function HustlerProfileView({
               <div className="mt-1 flex items-center gap-3 text-xs text-[#9CA3AF] flex-wrap">
                 <span className="flex items-center gap-1 text-[#FBBF24] font-semibold">
                   <Flame className="h-3.5 w-3.5 fill-current" />
-                  Master Craftsman Tier
+                  {builderTier}
                 </span>
                 <span>•</span>
-                <span className="text-[#A78BFA]">Founding Scout #4</span>
+                <span className="text-[#A78BFA]">
+                  {isOnchainSbtLoaded ? `${badges.length} SBT Credentials` : "Founding Scout #4"}
+                </span>
                 <span>•</span>
                 <span className="text-[#34D399]">Devnads Verified</span>
               </div>

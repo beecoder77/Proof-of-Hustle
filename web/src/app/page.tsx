@@ -38,6 +38,7 @@ import {
   raiseDisputeOnchain,
   autoReleaseOnchain,
 } from "../services/onchain";
+import { fetchLiveGigs, fetchLiveBurnData } from "../services/onchainFeed";
 
 // Initial seed submissions for realism
 const INITIAL_SUBMISSIONS: Record<string, SubmissionItem[]> = {
@@ -167,6 +168,44 @@ export default function Home() {
       localStorage.setItem("poh_activities_v2", JSON.stringify(activities));
     }
   }, [activities, isMounted]);
+
+  // Live onchain state from Monad Testnet contracts
+  const [totalBurnedCount, setTotalBurnedCount] = useState<string>("769");
+  const [isLiveOnchain, setIsLiveOnchain] = useState(false);
+
+  // Poll live onchain feed directly from Monad Testnet contracts
+  const loadLiveFeed = useCallback(async () => {
+    try {
+      setIsSyncing(true);
+      const [liveGigs, burnData] = await Promise.all([
+        fetchLiveGigs(50),
+        fetchLiveBurnData(),
+      ]);
+
+      if (liveGigs && liveGigs.length > 0) {
+        setGigs((prev) => {
+          const liveIds = new Set(liveGigs.map((g) => g.id));
+          const localOnly = prev.filter((g) => !liveIds.has(g.id) && g.id.startsWith("local-"));
+          return [...localOnly, ...liveGigs];
+        });
+        setIsLiveOnchain(true);
+      }
+
+      if (burnData && burnData.totalBurned > 0) {
+        setTotalBurnedCount(Math.round(burnData.totalBurned).toLocaleString());
+      }
+    } catch (err) {
+      console.warn("Could not load live onchain feed in page:", err);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLiveFeed();
+    const interval = setInterval(loadLiveFeed, 15_000);
+    return () => clearInterval(interval);
+  }, [loadLiveFeed]);
 
   // Sync onchain handle from HustlerProfileRegistry
   useEffect(() => {
@@ -486,16 +525,13 @@ export default function Home() {
     }
   };
 
-  const handleRefreshChain = () => {
-    setIsSyncing(true);
-    setTimeout(() => {
-      setIsSyncing(false);
-      triggerTxToast(
-        "Chain State Synced!",
-        "Fetched latest blocks and escrow balance from Monad Testnet node.",
-        ""
-      );
-    }, 900);
+  const handleRefreshChain = async () => {
+    await loadLiveFeed();
+    triggerTxToast(
+      "Chain State Synced!",
+      "Fetched latest blocks and live escrow states from Monad Testnet.",
+      ""
+    );
   };
 
   // Filter & Search Logic
@@ -517,7 +553,10 @@ export default function Home() {
 
   const totalEscrowed = useMemo(() => {
     return gigs
-      .reduce((acc, g) => acc + parseFloat(g.rewardAmount || "0"), 0)
+      .reduce((acc, g) => {
+        const val = parseFloat((g.rewardAmount || "0").replace(/,/g, ""));
+        return acc + (isNaN(val) ? 0 : val);
+      }, 0)
       .toLocaleString();
   }, [gigs]);
 
@@ -648,7 +687,7 @@ export default function Home() {
                   </div>
                   <div className="rounded-xl border border-white/[0.08] bg-[#0E1015]/80 p-3.5 text-center">
                     <span className="block text-[10px] uppercase font-semibold text-[#848B9B]">$HUSTLE Burned</span>
-                    <span className="font-mono text-base font-bold text-[#F87171] tabular-numbers">28.4K</span>
+                    <span className="font-mono text-base font-bold text-[#F87171] tabular-numbers">{totalBurnedCount}</span>
                   </div>
                 </div>
               </div>

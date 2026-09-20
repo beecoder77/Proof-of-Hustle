@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Flame, ExternalLink, ArrowDownRight, CheckCircle2, AlertCircle } from "lucide-react";
 import { CONTRACTS } from "../config/contracts";
 import { fetchTotalBurnedOnchain, burnHustleOnchain } from "../services/onchain";
+import { fetchLiveBurnData } from "../services/onchainFeed";
 import seededOnchainData from "../data/seededOnchainData.json";
 
 interface BurnRecord {
@@ -14,11 +15,12 @@ interface BurnRecord {
 }
 
 export function BurnTrackerWidget() {
-  const [burnedTotal, setBurnedTotal] = useState(28450);
+  const [burnedTotal, setBurnedTotal] = useState<number>(769);
   const [onchainBurnedWei, setOnchainBurnedWei] = useState<number>(0);
   const [isBurning, setIsBurning] = useState(false);
   const [burnSuccessTx, setBurnSuccessTx] = useState<string | null>(null);
   const [burnError, setBurnError] = useState<string | null>(null);
+  const [isLiveBurnSynced, setIsLiveBurnSynced] = useState(false);
 
   const [burnHistory, setBurnHistory] = useState<BurnRecord[]>([
     {
@@ -47,19 +49,31 @@ export function BurnTrackerWidget() {
     },
   ]);
 
-  // Read onchain totalHustleBurned from ProtocolBurnPool
+  // Read onchain totalHustleBurned and burn events from ProtocolBurnPool
   useEffect(() => {
     let active = true;
     async function loadOnchainBurn() {
-      const onchain = await fetchTotalBurnedOnchain();
-      if (active && onchain > 0) {
-        setOnchainBurnedWei(onchain);
-        setBurnedTotal((prev) => Math.max(prev, onchain));
+      try {
+        const live = await fetchLiveBurnData();
+        if (active && live) {
+          if (live.totalBurned > 0) {
+            setBurnedTotal(Math.round(live.totalBurned));
+            setOnchainBurnedWei(live.totalBurned);
+          }
+          if (live.burnHistory && live.burnHistory.length > 0) {
+            setBurnHistory(live.burnHistory);
+          }
+          setIsLiveBurnSynced(true);
+        }
+      } catch (err) {
+        console.warn("Could not load live burn data:", err);
       }
     }
     loadOnchainBurn();
+    const interval = setInterval(loadOnchainBurn, 12_000);
     return () => {
       active = false;
+      clearInterval(interval);
     };
   }, []);
 
@@ -100,9 +114,17 @@ export function BurnTrackerWidget() {
       <div className="relative overflow-hidden rounded-2xl border border-red-500/20 bg-gradient-to-br from-[#1C1318] via-[#151821] to-[#0E1015] p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div>
-            <div className="inline-flex items-center gap-1.5 rounded-md border border-red-500/25 bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-[#F87171]">
-              <Flame className="h-3.5 w-3.5 text-red-500 fill-current animate-pulse" />
-              <span>40% Protocol Escrow Allocation</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex items-center gap-1.5 rounded-md border border-red-500/25 bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-[#F87171]">
+                <Flame className="h-3.5 w-3.5 text-red-500 fill-current animate-pulse" />
+                <span>40% Protocol Escrow Allocation</span>
+              </div>
+              {isLiveBurnSynced && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-[#34D399]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#10B981] animate-pulse" />
+                  Live Monad Burn Pool
+                </span>
+              )}
             </div>
             <h2 className="mt-2 text-2xl sm:text-3xl font-bold text-[#F9FAFB]">
               Deflationary Auto-Burn Flywheel

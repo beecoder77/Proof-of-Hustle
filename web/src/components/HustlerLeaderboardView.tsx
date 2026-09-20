@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Trophy,
   Award,
@@ -15,12 +15,18 @@ import {
   Filter,
   CheckCircle2,
   Users,
+  Activity,
+  RefreshCw,
 } from "lucide-react";
 import { CONTRACTS } from "../config/contracts";
-
 import seededOnchainData from "../data/seededOnchainData.json";
+import {
+  fetchLiveLeaderboard,
+  LiveLeaderboardUser,
+  LiveEcosystemMetrics,
+} from "../services/onchainFeed";
 
-interface LeaderboardUser {
+export interface LeaderboardUser {
   rank: number;
   handle: string;
   address: string;
@@ -28,14 +34,14 @@ interface LeaderboardUser {
   totalEarningsUsdt: number;
   completedTasks: number;
   sbtCount: number;
-  rating: number; // e.g. 5.0
+  rating: number;
   hustleMined: number;
   topSkills: string[];
   recentWorkTitle: string;
   recentTxHash: string;
 }
 
-const LEADERBOARD_DATA: LeaderboardUser[] = seededOnchainData.leaderboard as LeaderboardUser[];
+const SEED_LEADERBOARD_DATA: LeaderboardUser[] = seededOnchainData.leaderboard as LeaderboardUser[];
 
 interface HustlerLeaderboardViewProps {
   onSelectUser?: (address: string) => void;
@@ -48,9 +54,41 @@ export function HustlerLeaderboardView({
 }: HustlerLeaderboardViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState<string>("ALL");
+  const [users, setUsers] = useState<LeaderboardUser[]>(SEED_LEADERBOARD_DATA);
+  const [metrics, setMetrics] = useState<LiveEcosystemMetrics>({
+    gigCount: 211,
+    totalSbtsMinted: 142,
+    settledVolumeUsdt: 22500,
+    totalHustleBurned: 769,
+    blockNumber: 64211923,
+  });
+  const [isLiveSynced, setIsLiveSynced] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const loadLiveLeaderboard = async () => {
+    try {
+      setIsRefreshing(true);
+      const res = await fetchLiveLeaderboard();
+      if (res && res.users.length > 0) {
+        setUsers(res.users);
+        setMetrics(res.metrics);
+        setIsLiveSynced(true);
+      }
+    } catch (err) {
+      console.warn("Live leaderboard fetch error:", err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLiveLeaderboard();
+    const interval = setInterval(loadLiveLeaderboard, 15_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const filteredUsers = useMemo(() => {
-    return LEADERBOARD_DATA.filter((user) => {
+    return users.filter((user) => {
       const matchesSearch =
         user.handle.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -69,7 +107,7 @@ export function HustlerLeaderboardView({
       }
       return true;
     });
-  }, [searchQuery, selectedFilter]);
+  }, [users, searchQuery, selectedFilter]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
@@ -77,9 +115,18 @@ export function HustlerLeaderboardView({
       <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-r from-[#151821] via-[#1B1E2B] to-[#151821] p-6 sm:p-8">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
-            <div className="inline-flex items-center gap-1.5 rounded-md bg-[#7C5CFC]/15 px-2.5 py-1 text-xs font-semibold text-[#A78BFA]">
-              <Trophy className="h-3.5 w-3.5" />
-              <span>Verifiable Onchain Proof-of-Work</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex items-center gap-1.5 rounded-md bg-[#7C5CFC]/15 px-2.5 py-1 text-xs font-semibold text-[#A78BFA]">
+                <Trophy className="h-3.5 w-3.5" />
+                <span>Verifiable Onchain Proof-of-Work</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-xs font-mono font-bold text-emerald-400">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span>{isLiveSynced ? `LIVE ONCHAIN (Block #${metrics.blockNumber.toLocaleString()})` : "SYNCING MONAD TESTNET..."}</span>
+              </div>
             </div>
             <h1 className="mt-3 text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
               Hustler Hall of Fame & Reputation
@@ -93,15 +140,15 @@ export function HustlerLeaderboardView({
           <div className="grid grid-cols-3 gap-3 w-full lg:w-auto">
             <div className="rounded-xl border border-white/[0.08] bg-[#0E1015]/80 p-3.5 text-center">
               <span className="block text-[10px] uppercase font-semibold text-[#848B9B]">Total SBTs Minted</span>
-              <span className="font-mono text-base font-bold text-[#7C5CFC] tabular-numbers">142</span>
+              <span className="font-mono text-base font-bold text-[#7C5CFC] tabular-numbers">{metrics.totalSbtsMinted}</span>
             </div>
             <div className="rounded-xl border border-white/[0.08] bg-[#0E1015]/80 p-3.5 text-center">
               <span className="block text-[10px] uppercase font-semibold text-[#848B9B]">Settled Volume</span>
-              <span className="font-mono text-base font-bold text-[#34D399] tabular-numbers">$22.5K</span>
+              <span className="font-mono text-base font-bold text-[#34D399] tabular-numbers">${metrics.settledVolumeUsdt > 1000 ? `${(metrics.settledVolumeUsdt / 1000).toFixed(1)}K` : metrics.settledVolumeUsdt}</span>
             </div>
             <div className="rounded-xl border border-white/[0.08] bg-[#0E1015]/80 p-3.5 text-center">
-              <span className="block text-[10px] uppercase font-semibold text-[#848B9B]">Avg Rating</span>
-              <span className="font-mono text-base font-bold text-[#F59E0B] tabular-numbers">4.96 ★</span>
+              <span className="block text-[10px] uppercase font-semibold text-[#848B9B]">Total Gigs Settled</span>
+              <span className="font-mono text-base font-bold text-[#F59E0B] tabular-numbers">{metrics.gigCount} Gigs</span>
             </div>
           </div>
         </div>

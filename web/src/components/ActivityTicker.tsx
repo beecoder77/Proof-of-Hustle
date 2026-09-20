@@ -5,6 +5,7 @@ import { Zap, Flame, CheckCircle, ShieldCheck } from "lucide-react";
 
 import { ActivityItem } from "../types";
 import seededOnchainData from "../data/seededOnchainData.json";
+import { fetchLiveActivities } from "../services/onchainFeed";
 
 const DEFAULT_ACTIVITIES: {
   icon: typeof CheckCircle;
@@ -30,8 +31,8 @@ const DEFAULT_ACTIVITIES: {
   {
     icon: Flame,
     color: "text-[#F87171]",
-    text: "300 $HUSTLE permanently burned on ProtocolBurnPool",
-    time: "Block #64156542",
+    text: "769 $HUSTLE permanently burned on ProtocolBurnPool",
+    time: "Block #64211923",
     tx: seededOnchainData.protocolBurns[0]?.burnTx || "0x271661972466136df0a72126123abbb1cd452a27df426cffbd4314d8a4ec691f",
   },
   {
@@ -56,14 +57,41 @@ interface ActivityTickerProps {
 
 export function ActivityTicker({ customActivities }: ActivityTickerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [liveActivities, setLiveActivities] = useState<ActivityItem[]>([]);
+  const [isLiveSynced, setIsLiveSynced] = useState(false);
 
-  // Convert custom activities to ticker items if present
+  useEffect(() => {
+    let active = true;
+    async function loadActivities() {
+      try {
+        const acts = await fetchLiveActivities();
+        if (active && acts.length > 0) {
+          setLiveActivities(acts);
+          setIsLiveSynced(true);
+        }
+      } catch (err) {
+        console.warn("Could not load live activities:", err);
+      }
+    }
+    loadActivities();
+    const interval = setInterval(loadActivities, 12_000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Convert custom or live activities to ticker items
   const items = React.useMemo(() => {
-    if (!customActivities || customActivities.length === 0) {
+    const source = (customActivities && customActivities.length > 0)
+      ? customActivities
+      : liveActivities;
+
+    if (!source || source.length === 0) {
       return DEFAULT_ACTIVITIES;
     }
 
-    const mapped = customActivities.map((act) => {
+    const mapped = source.map((act) => {
       let icon = Zap;
       let color = "text-[#7C5CFC]";
       if (act.type === "PAYOUT") {
@@ -90,7 +118,7 @@ export function ActivityTicker({ customActivities }: ActivityTickerProps) {
     });
 
     return [...mapped, ...DEFAULT_ACTIVITIES];
-  }, [customActivities]);
+  }, [customActivities, liveActivities]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -107,7 +135,7 @@ export function ActivityTicker({ customActivities }: ActivityTickerProps) {
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         <div className="flex items-center gap-2 overflow-hidden">
           <span className="flex items-center gap-1 rounded bg-white/[0.06] px-1.5 py-0.5 font-semibold text-[#848B9B] text-[10px] uppercase tracking-wider">
-            <Zap className="h-3 w-3 text-[#7C5CFC]" />
+            <span className={`h-1.5 w-1.5 rounded-full ${isLiveSynced ? "bg-[#10B981] animate-pulse" : "bg-[#7C5CFC]"}`} />
             Live Feed
           </span>
           <div className="flex items-center gap-2 transition-all duration-300">
