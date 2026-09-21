@@ -20,6 +20,12 @@ import {
   Clock,
   Sparkles,
   ArrowRight,
+  ArrowUpRight,
+  BarChart3,
+  Layers,
+  Activity,
+  CheckCircle2,
+  RefreshCw,
 } from "lucide-react";
 import { CONTRACTS } from "../config/contracts";
 import { formatUnits } from "viem";
@@ -30,6 +36,13 @@ export function TokenomicsView() {
   const [monthlyVolume, setMonthlyVolume] = useState(1_000_000); // $1M monthly volume default
   const [stakedAmount, setStakedAmount] = useState(10_000); // 10k HUSTLE staked default
   const [activeTab, setActiveTab] = useState<"overview" | "allocations" | "simulator" | "vesting">("overview");
+
+  // Kuru DEX Integration State
+  const [swapDirection, setSwapDirection] = useState<"HUSTLE_TO_MON" | "MON_TO_HUSTLE">("HUSTLE_TO_MON");
+  const [swapAmount, setSwapAmount] = useState<string>("500");
+  const [copiedKuruAddress, setCopiedKuruAddress] = useState<string | null>(null);
+  const [isSimulatingSwap, setIsSimulatingSwap] = useState(false);
+  const [simulatedReceipt, setSimulatedReceipt] = useState<string | null>(null);
 
   const [liveTotalSupply, setLiveTotalSupply] = useState<string>("20,000,000");
   const [liveBurnedAmount, setLiveBurnedAmount] = useState<string>("769");
@@ -240,6 +253,210 @@ export function TokenomicsView() {
             20% Real Yield
           </span>
           <span className="text-[11px] text-[#848B9B]">Attention Futures payout</span>
+        </div>
+      </div>
+
+      {/* Kuru DEX Onchain OrderBook & Liquidity Terminal */}
+      <div className="rounded-2xl border border-purple-500/25 bg-gradient-to-br from-[#161224] via-[#151821] to-[#0E1015] p-6 sm:p-8 shadow-2xl space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/[0.08] pb-6">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-[#7C5CFC]/20 border border-[#7C5CFC]/30 px-2.5 py-1 text-xs font-bold text-[#A78BFA]">
+                <Activity className="h-3.5 w-3.5 text-[#A78BFA] animate-pulse" />
+                <span>Kuru Central Limit Order Book (CLOB) DEX</span>
+              </span>
+              <span className="rounded-md bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 text-[11px] font-mono font-semibold text-[#34D399] flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#10B981] animate-ping" />
+                <span>Monad 400ms Sub-Second Finality</span>
+              </span>
+            </div>
+
+            <h2 className="mt-3 text-xl sm:text-2xl font-black text-white tracking-tight">
+              Kuru Onchain Liquidity & $HUSTLE Marketplace
+            </h2>
+            <p className="mt-1 text-xs sm:text-sm text-[#9CA3AF] max-w-2xl leading-relaxed">
+              Kuru is Monad&apos;s native high-frequency onchain orderbook exchange. Through Kuru&apos;s hybrid CLOB + AMM model, 
+              ProofOfHustle builders and curators trade $HUSTLE with deep liquidity, institutional maker rebates, and sub-second execution.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+            <a
+              href={`https://testnet.kuru.io/trade/${CONTRACTS.hustleToken.address}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7C5CFC] to-[#9073FD] px-5 py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-[#7C5CFC]/25 hover:opacity-95 active:scale-[0.98] transition-all"
+            >
+              <span>Trade $HUSTLE on Kuru</span>
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </div>
+        </div>
+
+        {/* Contract & Architecture Specs */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="rounded-xl border border-white/[0.06] bg-[#0E1015]/80 p-4 space-y-2">
+            <div className="flex items-center justify-between text-xs text-[#848B9B]">
+              <span className="font-semibold uppercase tracking-wider">Kuru Router Contract</span>
+              <span className="font-mono text-[10px] text-emerald-400">Verified</span>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono text-xs text-white truncate">
+                0x7EFbE105Ca7415dE98F96622173458ac1c054630
+              </span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText("0x7EFbE105Ca7415dE98F96622173458ac1c054630");
+                  setCopiedKuruAddress("router");
+                  setTimeout(() => setCopiedKuruAddress(null), 2000);
+                }}
+                className="text-[#848B9B] hover:text-white p-1"
+                title="Copy Kuru Router"
+              >
+                {copiedKuruAddress === "router" ? (
+                  <Check className="h-3.5 w-3.5 text-emerald-400" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+              </button>
+            </div>
+            <p className="text-[11px] text-[#848B9B]">
+              Central orchestrator managing deterministic CREATE2 market deployments and multi-hop routing.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-white/[0.06] bg-[#0E1015]/80 p-4 space-y-2">
+            <div className="flex items-center justify-between text-xs text-[#848B9B]">
+              <span className="font-semibold uppercase tracking-wider">Kuru Margin Account</span>
+              <span className="font-mono text-[10px] text-[#A78BFA]">Custody & Limit</span>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono text-xs text-white truncate">
+                0xd029C2D98ff85D8F64799017fE00a59B1159CE02
+              </span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText("0xd029C2D98ff85D8F64799017fE00a59B1159CE02");
+                  setCopiedKuruAddress("margin");
+                  setTimeout(() => setCopiedKuruAddress(null), 2000);
+                }}
+                className="text-[#848B9B] hover:text-white p-1"
+                title="Copy Margin Account"
+              >
+                {copiedKuruAddress === "margin" ? (
+                  <Check className="h-3.5 w-3.5 text-emerald-400" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+              </button>
+            </div>
+            <p className="text-[11px] text-[#848B9B]">
+              Handles market-maker collateral deposits, limit bids/asks, and zero-latency order cancellations.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-white/[0.06] bg-[#0E1015]/80 p-4 space-y-2">
+            <div className="flex items-center justify-between text-xs text-[#848B9B]">
+              <span className="font-semibold uppercase tracking-wider">Market Dynamics</span>
+              <span className="font-mono text-[10px] text-amber-400">Hybrid CLOB + AMM</span>
+            </div>
+            <div className="flex items-center justify-between text-xs font-mono text-white">
+              <span>Taker: 0.15%</span>
+              <span>Maker Rebate: -0.05%</span>
+              <span>Tick: 0.0001 MON</span>
+            </div>
+            <p className="text-[11px] text-[#848B9B]">
+              Incentivizes active automated market makers while KuruAMMVault guarantees instant fill for swaps.
+            </p>
+          </div>
+        </div>
+
+        {/* Interactive Swap & Slippage Simulator */}
+        <div className="rounded-xl border border-white/[0.08] bg-[#0E1015]/90 p-5 sm:p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-[#7C5CFC]" />
+              <h3 className="font-bold text-white text-sm">Instant Kuru CLOB Swap Simulator</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-[#848B9B]">Route:</span>
+              <span className="font-mono text-xs text-white bg-white/[0.06] px-2 py-0.5 rounded border border-white/[0.08]">
+                Kuru Flow Aggregator • Single-Hop
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-center">
+            <div className="space-y-3">
+              <div>
+                <div className="flex items-center justify-between text-xs text-[#848B9B] mb-1.5">
+                  <span>Swap Direction:</span>
+                  <button
+                    onClick={() =>
+                      setSwapDirection((prev) =>
+                        prev === "HUSTLE_TO_MON" ? "MON_TO_HUSTLE" : "HUSTLE_TO_MON"
+                      )
+                    }
+                    className="flex items-center gap-1 font-semibold text-[#A78BFA] hover:underline"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    <span>Switch Direction</span>
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={swapAmount}
+                    onChange={(e) => setSwapAmount(e.target.value)}
+                    placeholder="500"
+                    className="w-full rounded-xl border border-white/[0.1] bg-[#1B1E2B] px-4 py-3 text-sm font-mono font-bold text-white focus:border-[#7C5CFC] focus:outline-none"
+                  />
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-[#848B9B]">
+                    {swapDirection === "HUSTLE_TO_MON" ? "$HUSTLE" : "MON"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-lg bg-white/[0.03] p-3 text-[11px] text-[#848B9B] space-y-1">
+                <div className="flex justify-between">
+                  <span>Estimated Receive:</span>
+                  <strong className="font-mono text-white">
+                    {swapDirection === "HUSTLE_TO_MON"
+                      ? `${((parseFloat(swapAmount) || 0) * 0.0005).toFixed(4)} MON`
+                      : `${((parseFloat(swapAmount) || 0) * 2000).toLocaleString()} $HUSTLE`}
+                  </strong>
+                </div>
+                <div className="flex justify-between">
+                  <span>Price Impact / Slippage:</span>
+                  <strong className="font-mono text-emerald-400">&lt; 0.05% (CLOB Depth)</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span>Monad Finality Time:</span>
+                  <strong className="font-mono text-[#A78BFA]">~340ms (Sub-second)</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Protocol Flywheel Callout */}
+            <div className="rounded-xl border border-white/[0.08] bg-[#151821] p-4 space-y-3">
+              <div className="flex items-center gap-2 text-xs font-bold text-white">
+                <Flame className="h-4 w-4 text-[#F87171]" />
+                <span>Kuru Autonomous Protocol Buyback &amp; Burn</span>
+              </div>
+              <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
+                40% of all platform gig fees locked in <span className="font-mono text-white">ProtocolBurnPool</span> stream 
+                into Kuru Router swaps to execute automated market buybacks of $HUSTLE, permanently burning tokens to 
+                <span className="font-mono text-xs text-red-400"> 0x0...dEaD</span> to elevate token scarcity.
+              </p>
+              <div className="pt-2 flex items-center justify-between text-[11px] border-t border-white/[0.06]">
+                <span className="text-[#848B9B]">Deploy CLI:</span>
+                <code className="font-mono text-amber-300 bg-black/40 px-2 py-0.5 rounded border border-white/[0.06]">
+                  npm run kuru:inspect
+                </code>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
