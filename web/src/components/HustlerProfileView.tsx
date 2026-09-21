@@ -78,6 +78,29 @@ export function HustlerProfileView({
   const [usernameError, setUsernameError] = useState("");
   const [copiedAddress, setCopiedAddress] = useState(false);
 
+  // Sync username and state immediately when currentUserAddress changes
+  useEffect(() => {
+    if (currentUserAddress) {
+      const saved =
+        typeof window !== "undefined"
+          ? localStorage.getItem(`poh_username_${currentUserAddress.toLowerCase()}`)
+          : null;
+      if (saved) {
+        setUsername(saved);
+        setTempUsername(saved);
+      } else {
+        const fallback = currentUsername || `hustler_${currentUserAddress.slice(2, 6)}`;
+        setUsername(fallback);
+        setTempUsername(fallback);
+      }
+      setIsOnchainVerifiedHandle(false);
+    } else {
+      setUsername("");
+      setTempUsername("");
+      setIsOnchainVerifiedHandle(false);
+    }
+  }, [currentUserAddress, currentUsername]);
+
   // Onchain Balances
   const [hustleBalance, setHustleBalance] = useState<string>("Loading...");
   const [usdtBalance, setUsdtBalance] = useState<string>("Loading...");
@@ -309,6 +332,7 @@ export function HustlerProfileView({
 
   // Real 1-Click Faucet Claim Handlers on Monad Testnet
   const handleClaimUsdtFaucet = async () => {
+    if (!currentUserAddress || !isConnectedWallet) return;
     setIsMintingUsdt(true);
     try {
       const res = await claimUsdtFaucetOnchain(currentUserAddress);
@@ -344,6 +368,7 @@ export function HustlerProfileView({
   };
 
   const handleClaimHustleAirdrop = async () => {
+    if (!currentUserAddress || !isConnectedWallet) return;
     setIsClaimingHustle(true);
     try {
       const res = await claimHustleAirdropOnchain(currentUserAddress);
@@ -384,15 +409,22 @@ export function HustlerProfileView({
   useEffect(() => {
     let active = true;
     async function loadSBTs() {
-      if (!currentUserAddress) return;
+      if (!currentUserAddress) {
+        setBadges([]);
+        setIsOnchainSbtLoaded(false);
+        return;
+      }
       try {
         const live = await fetchLiveUserSBTs(currentUserAddress);
-        if (active && live && live.length > 0) {
-          setBadges(live);
-          setIsOnchainSbtLoaded(true);
+        if (active) {
+          setBadges(live || []);
+          setIsOnchainSbtLoaded(Boolean(live && live.length > 0));
         }
       } catch (err) {
         console.warn("Could not load onchain SBTs:", err);
+        if (active) {
+          setBadges([]);
+        }
       }
     }
     loadSBTs();
@@ -787,7 +819,11 @@ export function HustlerProfileView({
                     Verified Monad Testnet Smart Contract
                   </p>
                   <p>
-                    Handle will be permanently reserved on <span className="font-mono text-[#A78BFA]">0x6781...1B6D</span> with sub-400ms finality.
+                    Handle will be permanently reserved on{" "}
+                    <span className="font-mono text-[#A78BFA]">
+                      {CONTRACTS.profileRegistry.address.slice(0, 6)}...{CONTRACTS.profileRegistry.address.slice(-4)}
+                    </span>{" "}
+                    with sub-400ms finality.
                   </p>
                 </div>
               </div>

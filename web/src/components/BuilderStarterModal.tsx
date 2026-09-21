@@ -48,6 +48,10 @@ export function BuilderStarterModal({
   };
 
   const handleMintUsdt = async () => {
+    if (!currentUserAddress) {
+      onTriggerToast("Wallet Required", "Please connect your wallet first to claim testnet USDT.", "");
+      return;
+    }
     setIsMintingUsdt(true);
     try {
       const res = await claimUsdtFaucetOnchain(currentUserAddress);
@@ -68,6 +72,10 @@ export function BuilderStarterModal({
   };
 
   const handleMintHustle = async () => {
+    if (!currentUserAddress) {
+      onTriggerToast("Wallet Required", "Please connect your wallet first to claim $HUSTLE airdrop.", "");
+      return;
+    }
     setIsMintingHustle(true);
     try {
       const res = await claimHustleFaucetOnchain(currentUserAddress);

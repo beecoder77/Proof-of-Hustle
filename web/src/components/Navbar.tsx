@@ -304,19 +304,6 @@ export function Navbar({
                   <Coins className="h-4 w-4 text-amber-400" />
                   <span>Starter Faucet (USDT & HUSTLE)</span>
                 </button>
-
-                {onOpenTribunal && (
-                  <button
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      onOpenTribunal();
-                    }}
-                    className="w-full flex items-center gap-2.5 rounded-xl border border-white/[0.08] bg-[#1B1E2B] px-3.5 py-2.5 text-xs font-semibold text-[#848B9B] hover:text-white transition-all active:scale-[0.98]"
-                  >
-                    <Scale className="h-4 w-4 text-[#848B9B]" />
-                    <span>Dispute Tribunal Arbitration</span>
-                  </button>
-                )}
               </div>
 
               {/* Mobile Navigation List */}

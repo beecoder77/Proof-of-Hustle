@@ -307,7 +307,21 @@ export async function POST(req: NextRequest) {
       }
 
       case "burnHustle": {
-        const { amount } = params || {};
+        const { amount, user } = params || {};
+        
+        // Security check: Only the authorized protocol deployer can trigger manual burns through the relayer
+        const allowedDeployer = (
+          process.env.NEXT_PUBLIC_DEPLOYER_ADDRESS ||
+          "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99"
+        ).toLowerCase();
+
+        if (!user || user.toLowerCase() !== allowedDeployer) {
+          return NextResponse.json(
+            { success: false, error: "Access restricted: Only the authorized protocol deployer can trigger manual burns." },
+            { status: 403 }
+          );
+        }
+
         const burnAmount = amount
           ? (typeof amount === "string" && !amount.includes("00000000000000")
               ? parseUnits(amount.replace(/,/g, ""), 18)
@@ -353,11 +367,18 @@ export async function POST(req: NextRequest) {
       }
 
       case "voteDispute": {
-        const { gigId, vote } = params || {};
+        const { gigId, vote, user } = params || {};
         if (!gigId || vote === undefined) {
           return NextResponse.json(
             { success: false, error: "Missing gigId or vote parameter (1=WORKER, 2=CLIENT)" },
             { status: 400 }
+          );
+        }
+
+        if (!user) {
+          return NextResponse.json(
+            { success: false, error: "Authentication required: Please connect your wallet to vote on dispute tribunal." },
+            { status: 401 }
           );
         }
 

@@ -109,12 +109,21 @@ export function CommunityBountyHub({
   const totalBackers = bounties.reduce((acc, b) => acc + b.backersCount, 0);
 
   const handlePledgeOnchain = async (bounty: CommunityBounty) => {
+    if (!currentUserAddress) {
+      setStakeError((prev) => ({
+        ...prev,
+        [bounty.id]: "Please connect your wallet first to pledge attention futures.",
+      }));
+      onTriggerToast?.("Wallet Required", "Please connect your wallet first to stake hype.", "");
+      return;
+    }
+
     setIsStaking(true);
     setStakeError((prev) => ({ ...prev, [bounty.id]: "" }));
 
     try {
-      // Execute genuine onchain stakeHype on GigEscrow
-      const res = await stakeHypeOnchain(bounty.gigId, pledgeAmount);
+      // Execute genuine onchain stakeHype on GigEscrow with authenticated user
+      const res = await stakeHypeOnchain(bounty.gigId, pledgeAmount, currentUserAddress);
 
       if (res.success && res.txHash) {
         setConfirmedTx((prev) => ({ ...prev, [bounty.id]: res.txHash! }));
@@ -150,6 +159,11 @@ export function CommunityBountyHub({
   const handleCreateProposeBounty = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!proposeTitle || !proposeReward) return;
+
+    if (!currentUserAddress) {
+      onTriggerToast?.("Wallet Required", "Please connect your wallet first to propose a community bounty.", "");
+      return;
+    }
 
     setIsSubmittingPropose(true);
     try {
@@ -187,6 +201,11 @@ export function CommunityBountyHub({
   };
 
   const handleClaimYield = async (gigId: string) => {
+    if (!currentUserAddress) {
+      onTriggerToast?.("Wallet Required", "Please connect your wallet first to claim curation yield.", "");
+      return;
+    }
+
     setIsClaimingYield((prev) => ({ ...prev, [gigId]: true }));
     try {
       const res = await claimCurationRewardOnchain(gigId);
@@ -215,6 +234,11 @@ export function CommunityBountyHub({
   };
 
   const handleUnstake = async (gigId: string) => {
+    if (!currentUserAddress) {
+      onTriggerToast?.("Wallet Required", "Please connect your wallet first to unstake hype.", "");
+      return;
+    }
+
     setIsUnstaking((prev) => ({ ...prev, [gigId]: true }));
     try {
       const res = await unstakeHypeOnchain(gigId);

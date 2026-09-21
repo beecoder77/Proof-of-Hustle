@@ -234,8 +234,11 @@ export async function fetchTotalBurnedOnchain(): Promise<number> {
 /**
  * Execute permissionless burn of $HUSTLE onchain
  */
-export async function burnHustleOnchain(amount?: string): Promise<RelayResponse> {
-  return callRelayApi("burnHustle", { amount });
+export async function burnHustleOnchain(
+  amount?: string,
+  userAddress?: string
+): Promise<RelayResponse> {
+  return callRelayApi("burnHustle", { amount, user: userAddress });
 }
 
 /**
@@ -253,9 +256,10 @@ export async function raiseDisputeOnchain(
  */
 export async function voteDisputeOnchain(
   gigId: string,
-  vote: 1 | 2
+  vote: 1 | 2,
+  userAddress?: string
 ): Promise<RelayResponse> {
-  return callRelayApi("voteDispute", { gigId, vote });
+  return callRelayApi("voteDispute", { gigId, vote, user: userAddress });
 }
 
 /**

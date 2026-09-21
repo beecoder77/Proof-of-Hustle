@@ -91,9 +91,14 @@ export function CommunityTribunalModal({
   if (!isOpen) return null;
 
   const handleVote = async (gigId: string, vote: 1 | 2) => {
+    if (!currentUserAddress) {
+      onTriggerToast("Wallet Required", "Please connect your wallet first to cast a juror vote.", "");
+      return;
+    }
+
     setIsProcessing(true);
     try {
-      const res = await voteDisputeOnchain(gigId, vote);
+      const res = await voteDisputeOnchain(gigId, vote, currentUserAddress);
       const tx = res.success && res.txHash ? res.txHash : undefined;
 
       // Update state

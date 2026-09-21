@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { CONTRACTS } from "../config/contracts";
 import { burnHustleOnchain } from "../services/onchain";
-import { fetchLiveBurnData } from "../services/onchainFeed";
+import { fetchLiveBurnData, ECOSYSTEM_BUILDER_ADDRESSES } from "../services/onchainFeed";
 
 interface BurnRecord {
   amount: string;
@@ -28,7 +28,10 @@ interface BurnTrackerWidgetProps {
   onTriggerToast?: (title: string, desc: string, txHash: string) => void;
 }
 
-const DEPLOYER_ADDRESS = "0x7a2e35cd6293b3d49f50f5e07f0aaf352127fa99";
+const DEPLOYER_ADDRESS = (
+  process.env.NEXT_PUBLIC_DEPLOYER_ADDRESS ||
+  ECOSYSTEM_BUILDER_ADDRESSES[0]
+).toLowerCase();
 
 export function BurnTrackerWidget({
   currentUserAddress,
@@ -128,7 +131,7 @@ export function BurnTrackerWidget({
     setBurnError(null);
 
     try {
-      const res = await burnHustleOnchain("150");
+      const res = await burnHustleOnchain("150", currentUserAddress);
       if (res.success && res.txHash) {
         setBurnSuccessTx(res.txHash);
         setBurnedTotal((prev) => prev + 150);
@@ -360,8 +363,10 @@ export function BurnTrackerWidget({
         <div className="mt-5 divide-y divide-white/[0.05]">
           {burnHistory.map((item, idx) => {
             const isUserBurn =
+              item.gig?.toLowerCase().includes("deployer") ||
+              Boolean(burnSuccessTx && item.tx.toLowerCase() === burnSuccessTx.toLowerCase()) ||
               item.tx.toLowerCase() ===
-              "0x10585df925d982b6f23d4b7c86340b6b50435d8e368dad557b85180a8916ae30".toLowerCase();
+                "0x10585df925d982b6f23d4b7c86340b6b50435d8e368dad557b85180a8916ae30".toLowerCase();
 
             return (
               <div
