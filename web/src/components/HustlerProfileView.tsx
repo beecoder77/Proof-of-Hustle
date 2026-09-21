@@ -445,19 +445,19 @@ export function HustlerProfileView({
       {/* Profile Header & Custom Username Banner */}
       <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#151821] p-6 sm:p-8 shadow-xl">
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 w-full lg:w-auto">
             {/* Evolvable Avatar Frame with Monad Iris Glow */}
-            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border-2 border-[#10B981] bg-gradient-to-tr from-[#1B1E2B] via-[#7C5CFC]/20 to-[#10B981]/20 shadow-xl shadow-[#10B981]/20">
-              <Award className="h-10 w-10 text-[#34D399]" />
+            <div className="relative flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center rounded-2xl border-2 border-[#10B981] bg-gradient-to-tr from-[#1B1E2B] via-[#7C5CFC]/20 to-[#10B981]/20 shadow-xl shadow-[#10B981]/20">
+              <Award className="h-8 w-8 sm:h-10 sm:w-10 text-[#34D399]" />
               <div className="absolute -bottom-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#10B981] text-[10px] font-bold text-black shadow">
                 L{builderLevel}
               </div>
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1 min-w-0 w-full sm:w-auto">
               {/* Username Row & Edit Trigger */}
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl sm:text-2xl font-extrabold text-[#F9FAFB] tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-extrabold text-[#F9FAFB] tracking-tight truncate">
                   {username}
                 </h2>
                 {isConnectedWallet && (
@@ -467,42 +467,42 @@ export function HustlerProfileView({
                       setIsEditingUsername(true);
                     }}
                     title="Customize Username Onchain"
-                    className="flex items-center gap-1 rounded-lg border border-white/[0.1] bg-[#1B1E2B] px-2.5 py-1 text-xs text-[#848B9B] hover:text-white hover:border-[#7C5CFC] active:scale-[0.98] transition-all"
+                    className="flex items-center gap-1 rounded-lg border border-white/[0.1] bg-[#1B1E2B] px-2.5 py-1 text-xs text-[#848B9B] hover:text-white hover:border-[#7C5CFC] active:scale-[0.98] transition-all shrink-0"
                   >
                     <Edit3 className="h-3 w-3 text-[#7C5CFC]" />
                     <span>Edit Handle</span>
                   </button>
                 )}
                 {isOnchainVerifiedHandle ? (
-                  <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-[#34D399] flex items-center gap-1">
+                  <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-[#34D399] flex items-center gap-1 shrink-0">
                     <CheckCircle2 className="h-3 w-3" />
                     Onchain Verified
                   </span>
                 ) : (
-                  <span className="rounded-full border border-[#7C5CFC]/25 bg-[#7C5CFC]/10 px-2.5 py-0.5 text-[10px] font-semibold text-[#A78BFA]">
+                  <span className="rounded-full border border-[#7C5CFC]/25 bg-[#7C5CFC]/10 px-2.5 py-0.5 text-[10px] font-semibold text-[#A78BFA] shrink-0">
                     Syncing Onchain
                   </span>
                 )}
               </div>
 
               {/* Wallet Address Copy Pill */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
                   onClick={handleCopyAddress}
-                  className="flex items-center gap-1.5 font-mono text-xs text-[#848B9B] hover:text-[#F9FAFB] transition-colors"
+                  className="flex items-center gap-1.5 font-mono text-xs text-[#848B9B] hover:text-[#F9FAFB] transition-colors truncate max-w-[200px] xs:max-w-[260px] sm:max-w-none"
                 >
-                  <span>{currentUserAddress}</span>
+                  <span className="truncate">{currentUserAddress}</span>
                   {copiedAddress ? (
-                    <Check className="h-3 w-3 text-[#34D399]" />
+                    <Check className="h-3 w-3 text-[#34D399] shrink-0" />
                   ) : (
-                    <Copy className="h-3 w-3 text-[#848B9B]" />
+                    <Copy className="h-3 w-3 text-[#848B9B] shrink-0" />
                   )}
                 </button>
                 <a
                   href={`https://testnet.monadscan.com/address/${currentUserAddress}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[#7C5CFC] hover:text-[#9073FD] text-xs inline-flex items-center gap-0.5"
+                  className="text-[#7C5CFC] hover:text-[#9073FD] text-xs inline-flex items-center gap-0.5 shrink-0"
                 >
                   <span>MonadScan</span>
                   <ExternalLink className="h-2.5 w-2.5" />

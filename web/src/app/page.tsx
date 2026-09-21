@@ -17,6 +17,7 @@ import { BuilderStarterModal } from "../components/BuilderStarterModal";
 import { HustlerLeaderboardView } from "../components/HustlerLeaderboardView";
 import { CommunityTribunalModal } from "../components/CommunityTribunalModal";
 import { TokenomicsView } from "../components/TokenomicsView";
+import { GigDetailView } from "../components/GigDetailView";
 import { GigItem, SubmissionItem, ActivityItem } from "../types";
 import {
   Search,
@@ -107,6 +108,56 @@ export default function Home() {
   const [activeNavTab, setActiveNavTab] = useState("explore");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState<"ALL" | "CONTEST" | "FCFS" | "SEALED">("ALL");
+
+  const updateGigUrl = useCallback((id: string) => {
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("gig", id);
+      window.history.pushState({}, "", url.toString());
+    }
+  }, []);
+
+  const clearGigUrl = useCallback(() => {
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("gig");
+      window.history.pushState({}, "", url.toString());
+    }
+  }, []);
+
+  const handleNavTabChange = (tab: string) => {
+    setSelectedGig(null);
+    clearGigUrl();
+    setActiveNavTab(tab);
+  };
+
+  // Listen for browser back / forward navigation to sync selectedGig
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const gigId = params.get("gig");
+      if (gigId && gigs.length > 0) {
+        const found = gigs.find((g) => g.id === gigId);
+        if (found) setSelectedGig(found);
+      } else {
+        setSelectedGig(null);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [gigs]);
+
+  // Initial deep link hydration
+  useEffect(() => {
+    if (typeof window !== "undefined" && gigs.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const gigId = params.get("gig");
+      if (gigId) {
+        const found = gigs.find((g) => g.id === gigId);
+        if (found) setSelectedGig(found);
+      }
+    }
+  }, [gigs]);
 
   // Hydrate persistent state from LocalStorage only AFTER mount to guarantee identical SSR & client markup
   useEffect(() => {
@@ -613,8 +664,9 @@ export default function Home() {
         onOpenCreateModal={() => setIsCreateModalOpen(true)}
         onOpenTokenModal={() => setIsTokenModalOpen(true)}
         activeTab={activeNavTab}
-        setActiveTab={setActiveNavTab}
+        setActiveTab={handleNavTabChange}
         currentUsername={currentUsername}
+        onOpenTribunal={() => setIsTribunalOpen(true)}
       />
 
       {/* Live Monad Telemetry Bar */}
@@ -629,218 +681,242 @@ export default function Home() {
       <ActivityTicker customActivities={activities} />
 
       {/* Main Container */}
-      <main className="mx-auto flex-1 w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        {/* Navigation Tab Switching */}
-        {activeNavTab === "community" && (
-          <CommunityBountyHub
-            onTriggerToast={triggerTxToast}
+      <main className="mx-auto flex-1 w-full max-w-7xl px-3.5 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-28 lg:pb-12">
+        {selectedGig ? (
+          <GigDetailView
+            gig={selectedGig}
+            submissions={submissions[selectedGig.id] || []}
             currentUserAddress={currentUserAddress}
-          />
-        )}
-        {activeNavTab === "leaderboard" && (
-          <HustlerLeaderboardView
-            onSelectUser={(address) => {
-              setInspectedHustlerAddress(address);
+            onBack={() => {
+              setSelectedGig(null);
+              clearGigUrl();
+            }}
+            onClaim={handleClaimTask}
+            onSubmitWork={handleSubmitWork}
+            onApprovePayout={handleApprovePayout}
+            onOpenMeraDrawer={() => setIsMeraDrawerOpen(true)}
+            sealedData={sealedSubmissionData}
+            onClearSealedData={() => setSealedSubmissionData(null)}
+            onConnect={login}
+            onHype={handleHype}
+            onSelectCreator={(creatorAddr) => {
+              setInspectedHustlerAddress(creatorAddr);
+              setSelectedGig(null);
+              clearGigUrl();
               setActiveNavTab("profile");
             }}
-            onOpenProfile={() => {
-              if (!connectedAddress) {
-                login();
-              } else {
-                setInspectedHustlerAddress(null);
-                setActiveNavTab("profile");
+            onRaiseDispute={async (gigId) => {
+              try {
+                const res = await raiseDisputeOnchain(gigId);
+                triggerTxToast(
+                  "Dispute Raised Onchain!",
+                  res.success
+                    ? `Transferred to Community Tribunal for Schelling point juror voting (Block #${res.blockNumber || ""}).`
+                    : "Dispute recorded on Monad Testnet.",
+                  res.txHash
+                );
+                setIsTribunalOpen(true);
+              } catch (e: any) {
+                console.error("Raise dispute error", e);
+              }
+            }}
+            onAutoRelease={async (gigId) => {
+              try {
+                const res = await autoReleaseOnchain(gigId);
+                triggerTxToast(
+                  "Escrow Auto-Released Onchain!",
+                  res.success
+                    ? `72-hour anti-ghosting clock expired. 100% payout released with 5-star SBT (Block #${res.blockNumber || ""}).`
+                    : "Auto-release executed on Monad Testnet.",
+                  res.txHash
+                );
+              } catch (e: any) {
+                console.error("Auto-release error", e);
               }
             }}
           />
-        )}
-        {activeNavTab === "burn" && (
-          <BurnTrackerWidget
-            currentUserAddress={connectedAddress}
-            onTriggerToast={triggerTxToast}
-          />
-        )}
-        {activeNavTab === "tokenomics" && <TokenomicsView />}
-        {activeNavTab === "profile" && (
-          !connectedAddress && !inspectedHustlerAddress ? (
-            <div className="mx-auto max-w-xl py-16 text-center space-y-6">
-              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-white/[0.08] bg-[#151821] shadow-2xl shadow-[#7C5CFC]/20">
-                <ShieldCheck className="h-10 w-10 text-[#7C5CFC]" />
-              </div>
-              <div className="space-y-2">
-                <h2 className="text-2xl font-black text-white tracking-tight">
-                  Connect Wallet to Access Hustler Profile
-                </h2>
-                <p className="text-xs sm:text-sm text-[#9CA3AF] max-w-md mx-auto leading-relaxed">
-                  Your Soulbound ERC-5192 reputation, verified gig proofs, onchain handle, and Monad token balances belong strictly to your private wallet.
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-                <button
-                  onClick={login}
-                  className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#7C5CFC] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#7C5CFC]/25 transition-all hover:bg-[#9073FD] active:scale-[0.98]"
-                >
-                  <Wallet className="h-4 w-4" />
-                  <span>Connect Monad Wallet</span>
-                </button>
-                <button
-                  onClick={() => setActiveNavTab("explore")}
-                  className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-[#151821] px-5 py-3 text-sm font-semibold text-[#848B9B] hover:text-white hover:border-white/20 transition-all active:scale-[0.98]"
-                >
-                  <span>Explore Open Gigs</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <HustlerProfileView
-              currentUserAddress={inspectedHustlerAddress || connectedAddress || ""}
-              currentUsername={inspectedHustlerAddress ? undefined : currentUsername}
-              onUpdateUsername={setCurrentUsername}
-              onTriggerToast={triggerTxToast}
-              isConnectedWallet={
-                isConnected &&
-                (!inspectedHustlerAddress ||
-                  inspectedHustlerAddress.toLowerCase() === connectedAddress?.toLowerCase())
-              }
-              onResetToMyProfile={() => setInspectedHustlerAddress(null)}
-            />
-          )
-        )}
-
-        {activeNavTab === "explore" && (
-          <div className="space-y-8">
-            {/* Hero Stats Banner */}
-            <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-r from-[#151821] via-[#1B1E2B] to-[#151821] p-6 sm:p-8">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 rounded-md bg-[#7C5CFC]/15 px-2.5 py-1 text-xs font-semibold text-[#A78BFA]">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    <span>Monad Track 03: Social, Attention & Culture</span>
+        ) : (
+          <>
+            {/* Navigation Tab Switching */}
+            {activeNavTab === "community" && (
+              <CommunityBountyHub
+                onTriggerToast={triggerTxToast}
+                currentUserAddress={currentUserAddress}
+              />
+            )}
+            {activeNavTab === "leaderboard" && (
+              <HustlerLeaderboardView
+                onSelectUser={(address) => {
+                  setInspectedHustlerAddress(address);
+                  setActiveNavTab("profile");
+                }}
+                onOpenProfile={() => {
+                  if (!connectedAddress) {
+                    login();
+                  } else {
+                    setInspectedHustlerAddress(null);
+                    setActiveNavTab("profile");
+                  }
+                }}
+              />
+            )}
+            {activeNavTab === "burn" && (
+              <BurnTrackerWidget
+                currentUserAddress={connectedAddress}
+                onTriggerToast={triggerTxToast}
+              />
+            )}
+            {activeNavTab === "tokenomics" && <TokenomicsView />}
+            {activeNavTab === "profile" && (
+              !connectedAddress && !inspectedHustlerAddress ? (
+                <div className="mx-auto max-w-xl py-16 text-center space-y-6">
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-white/[0.08] bg-[#151821] shadow-2xl shadow-[#7C5CFC]/20">
+                    <ShieldCheck className="h-10 w-10 text-[#7C5CFC]" />
                   </div>
-                  <h1 className="mt-3 text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-                    Where Freelance Hustles Become Verifiable Onchain Equity
-                  </h1>
-                  <p className="mt-2 text-xs sm:text-sm text-[#9CA3AF] max-w-2xl leading-relaxed">
-                    Zero predatory 20% fees. Sub-second escrow payouts via Monad. Stake attention on promising gigs to earn curation yield, and build portable Soulbound reputation.
-                  </p>
-                </div>
-
-                {/* Quick KPI Pills */}
-                <div className="grid grid-cols-3 gap-3 w-full lg:w-auto">
-                  <div className="rounded-xl border border-white/[0.08] bg-[#0E1015]/80 p-3.5 text-center">
-                    <span className="block text-[10px] uppercase font-semibold text-[#848B9B]">Escrow Settled</span>
-                    <span className="font-mono text-base font-bold text-[#34D399] tabular-numbers">${totalEscrowed}</span>
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-black text-white tracking-tight">
+                      Connect Wallet to Access Hustler Profile
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[#9CA3AF] max-w-md mx-auto leading-relaxed">
+                      Your Soulbound ERC-5192 reputation, verified gig proofs, onchain handle, and Monad token balances belong strictly to your private wallet.
+                    </p>
                   </div>
-                  <div className="rounded-xl border border-white/[0.08] bg-[#0E1015]/80 p-3.5 text-center">
-                    <span className="block text-[10px] uppercase font-semibold text-[#848B9B]">Block Finality</span>
-                    <span className="font-mono text-base font-bold text-[#7C5CFC] tabular-numbers">400ms</span>
-                  </div>
-                  <div className="rounded-xl border border-white/[0.08] bg-[#0E1015]/80 p-3.5 text-center">
-                    <span className="block text-[10px] uppercase font-semibold text-[#848B9B]">$HUSTLE Burned</span>
-                    <span className="font-mono text-base font-bold text-[#F87171] tabular-numbers">{totalBurnedCount}</span>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                    <button
+                      onClick={login}
+                      className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#7C5CFC] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#7C5CFC]/25 transition-all hover:bg-[#9073FD] active:scale-[0.98]"
+                    >
+                      <Wallet className="h-4 w-4" />
+                      <span>Connect Monad Wallet</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveNavTab("explore")}
+                      className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-[#151821] px-5 py-3 text-sm font-semibold text-[#848B9B] hover:text-white hover:border-white/20 transition-all active:scale-[0.98]"
+                    >
+                      <span>Explore Open Gigs</span>
+                    </button>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Filter and Search Controls */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              {/* Filter Tabs */}
-              <div className="flex items-center gap-1.5 self-start rounded-xl border border-white/[0.07] bg-[#151821] p-1 text-xs">
-                {(["ALL", "CONTEST", "FCFS", "SEALED"] as const).map((filter) => (
-                  <button
-                    key={filter}
-                    onClick={() => setSelectedFilter(filter)}
-                    className={`rounded-lg px-3 py-1.5 font-semibold transition-all ${
-                      selectedFilter === filter
-                        ? "bg-[#7C5CFC] text-white shadow-sm"
-                        : "text-[#848B9B] hover:text-[#F9FAFB]"
-                    }`}
-                  >
-                    {filter === "ALL" && "All Hustles"}
-                    {filter === "CONTEST" && "Contests"}
-                    {filter === "FCFS" && "FCFS Tasks"}
-                    {filter === "SEALED" && "Mera Sealed"}
-                  </button>
-                ))}
-              </div>
-
-              {/* Search Bar */}
-              <div className="relative w-full sm:w-80">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#848B9B]" />
-                <input
-                  id="gig-search-input"
-                  type="text"
-                  placeholder="Search skills, bounties, tags... (Press /)"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-xl border border-white/[0.1] bg-[#151821] pl-9 pr-8 py-2 text-xs text-white placeholder-gray-500 focus:border-[#7C5CFC] focus:outline-none"
+              ) : (
+                <HustlerProfileView
+                  currentUserAddress={inspectedHustlerAddress || connectedAddress || ""}
+                  currentUsername={inspectedHustlerAddress ? undefined : currentUsername}
+                  onUpdateUsername={setCurrentUsername}
+                  onTriggerToast={triggerTxToast}
+                  isConnectedWallet={
+                    isConnected &&
+                    (!inspectedHustlerAddress ||
+                      inspectedHustlerAddress.toLowerCase() === connectedAddress?.toLowerCase())
+                  }
+                  onResetToMyProfile={() => setInspectedHustlerAddress(null)}
                 />
-                <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-mono text-[#848B9B]">
-                  /
-                </kbd>
-              </div>
-            </div>
+              )
+            )}
 
-            {/* Gigs Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredGigs.map((gig) => (
-                <GigCard
-                  key={gig.id}
-                  gig={gig}
-                  onSelect={(g) => setSelectedGig(g)}
-                  onHype={handleHype}
-                />
-              ))}
-            </div>
-          </div>
+            {activeNavTab === "explore" && (
+              <div className="space-y-8">
+                {/* Hero Stats Banner */}
+                <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-r from-[#151821] via-[#1B1E2B] to-[#151821] p-5 sm:p-8">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div>
+                      <div className="inline-flex items-center gap-1.5 rounded-md bg-[#7C5CFC]/15 px-2.5 py-1 text-xs font-semibold text-[#A78BFA]">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        <span>Monad Track 03: Social, Attention & Culture</span>
+                      </div>
+                      <h1 className="mt-3 text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-white leading-tight">
+                        Where Freelance Hustles Become Verifiable Onchain Equity
+                      </h1>
+                      <p className="mt-2 text-xs sm:text-sm text-[#9CA3AF] max-w-2xl leading-relaxed">
+                        Zero predatory 20% fees. Sub-second escrow payouts via Monad. Stake attention on promising gigs to earn curation yield, and build portable Soulbound reputation.
+                      </p>
+                    </div>
+
+                    {/* Quick KPI Pills */}
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full lg:w-auto">
+                      <div className="rounded-xl border border-white/[0.08] bg-[#0E1015]/80 p-2.5 sm:p-3.5 text-center">
+                        <span className="block text-[9px] sm:text-[10px] uppercase font-semibold text-[#848B9B] truncate">Escrow Settled</span>
+                        <span className="font-mono text-xs sm:text-base font-bold text-[#34D399] tabular-numbers">${totalEscrowed}</span>
+                      </div>
+                      <div className="rounded-xl border border-white/[0.08] bg-[#0E1015]/80 p-2.5 sm:p-3.5 text-center">
+                        <span className="block text-[9px] sm:text-[10px] uppercase font-semibold text-[#848B9B] truncate">Block Finality</span>
+                        <span className="font-mono text-xs sm:text-base font-bold text-[#7C5CFC] tabular-numbers">400ms</span>
+                      </div>
+                      <div className="rounded-xl border border-white/[0.08] bg-[#0E1015]/80 p-2.5 sm:p-3.5 text-center">
+                        <span className="block text-[9px] sm:text-[10px] uppercase font-semibold text-[#848B9B] truncate">$HUSTLE Burned</span>
+                        <span className="font-mono text-xs sm:text-base font-bold text-[#F87171] tabular-numbers">{totalBurnedCount}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filter and Search Controls */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  {/* Filter Tabs */}
+                  <div className="flex items-center gap-1.5 max-w-full overflow-x-auto no-scrollbar rounded-xl border border-white/[0.07] bg-[#151821] p-1 text-xs">
+                    {(["ALL", "CONTEST", "FCFS", "SEALED"] as const).map((filter) => (
+                      <button
+                        key={filter}
+                        onClick={() => setSelectedFilter(filter)}
+                        className={`rounded-lg px-3 py-1.5 font-semibold transition-all shrink-0 whitespace-nowrap ${
+                          selectedFilter === filter
+                            ? "bg-[#7C5CFC] text-white shadow-sm"
+                            : "text-[#848B9B] hover:text-[#F9FAFB]"
+                        }`}
+                      >
+                        {filter === "ALL" && "All Hustles"}
+                        {filter === "CONTEST" && "Contests"}
+                        {filter === "FCFS" && "FCFS Tasks"}
+                        {filter === "SEALED" && "Mera Sealed"}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Search Bar */}
+                  <div className="relative w-full sm:w-80">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#848B9B]" />
+                    <input
+                      id="gig-search-input"
+                      type="text"
+                      placeholder="Search skills, bounties, tags... (Press /)"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full rounded-xl border border-white/[0.1] bg-[#151821] pl-9 pr-8 py-2.5 text-base sm:text-xs text-white placeholder-gray-500 focus:border-[#7C5CFC] focus:outline-none"
+                    />
+                    {searchQuery ? (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-[#848B9B] hover:text-white"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    ) : (
+                      <kbd className="hidden sm:inline-block absolute right-2.5 top-1/2 -translate-y-1/2 rounded bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-mono text-[#848B9B]">
+                        /
+                      </kbd>
+                    )}
+                  </div>
+                </div>
+
+                {/* Gigs Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {filteredGigs.map((gig) => (
+                    <GigCard
+                      key={gig.id}
+                      gig={gig}
+                      onSelect={(g) => {
+                        setSelectedGig(g);
+                        updateGigUrl(g.id);
+                      }}
+                      onHype={handleHype}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </main>
 
-      {/* Slide-in Submission Drawer */}
-      <SubmissionDrawer
-        gig={selectedGig}
-        submissions={submissions[selectedGig?.id || ""] || []}
-        currentUserAddress={currentUserAddress}
-        onClose={() => setSelectedGig(null)}
-        onClaim={handleClaimTask}
-        onSubmitWork={handleSubmitWork}
-        onApprovePayout={handleApprovePayout}
-        onOpenMeraDrawer={() => setIsMeraDrawerOpen(true)}
-        sealedData={sealedSubmissionData}
-        onClearSealedData={() => setSealedSubmissionData(null)}
-        onConnect={login}
-        onRaiseDispute={async (gigId) => {
-          try {
-            const res = await raiseDisputeOnchain(gigId);
-            triggerTxToast(
-              "Dispute Raised Onchain!",
-              res.success
-                ? `Transferred to Community Tribunal for Schelling point juror voting (Block #${res.blockNumber || ""}).`
-                : "Dispute recorded on Monad Testnet.",
-              res.txHash
-            );
-            setIsTribunalOpen(true);
-            setSelectedGig(null);
-          } catch (e: any) {
-            console.error("Raise dispute error", e);
-          }
-        }}
-        onAutoRelease={async (gigId) => {
-          try {
-            const res = await autoReleaseOnchain(gigId);
-            triggerTxToast(
-              "Escrow Auto-Released Onchain!",
-              res.success
-                ? `72-hour anti-ghosting clock expired. 100% payout released with 5-star SBT (Block #${res.blockNumber || ""}).`
-                : "Auto-release executed on Monad Testnet.",
-              res.txHash
-            );
-            setSelectedGig(null);
-          } catch (e: any) {
-            console.error("Auto-release error", e);
-          }
-        }}
-      />
 
       {/* 3-Step Create Gig Modal */}
       <CreateGigModal

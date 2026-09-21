@@ -113,7 +113,7 @@ export function BuilderStarterModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl rounded-2xl border border-white/[0.08] bg-[#151821] shadow-2xl overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-xl rounded-2xl border border-white/[0.08] bg-[#151821] shadow-2xl overflow-y-auto max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/[0.07] px-6 py-4 bg-[#1B1E2B]/50">
           <div className="flex items-center gap-3">

@@ -302,13 +302,13 @@ export function CommunityBountyHub({
           </div>
         </div>
 
-        <div className="mt-6 flex items-center justify-between border-t border-white/[0.06] pt-4">
+        <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-white/[0.06] pt-4">
           <span className="text-xs text-[#848B9B]">
             All pledges execute onchain via <span className="font-mono text-white">GigEscrow.stakeHype()</span>
           </span>
           <button
             onClick={() => setIsProposeOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#7C5CFC] hover:bg-[#6A4BE2] px-3.5 py-1.5 text-xs font-bold text-white shadow-lg transition-all active:scale-95"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#7C5CFC] hover:bg-[#6A4BE2] px-3.5 py-2 text-xs font-bold text-white shadow-lg transition-all active:scale-95 shrink-0"
           >
             <Sparkles className="h-3.5 w-3.5" />
             <span>Propose Ecosystem Bounty</span>

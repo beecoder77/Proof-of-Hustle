@@ -51,12 +51,12 @@ export function CreateGigModal({ isOpen, onClose, onCreateGig }: CreateGigModalP
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       {/* Backdrop */}
       <div onClick={onClose} className="absolute inset-0 bg-black/70 backdrop-blur-md animate-backdrop-fade cursor-pointer" />
 
       {/* Modal Card */}
-      <div className="relative w-full max-w-lg rounded-2xl border border-white/[0.08] bg-[#151821] p-6 shadow-2xl animate-modal-pop transform-gpu">
+      <div className="relative w-full max-w-lg rounded-2xl border border-white/[0.08] bg-[#151821] p-5 sm:p-6 shadow-2xl animate-modal-pop transform-gpu max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
           <div>

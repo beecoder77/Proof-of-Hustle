@@ -188,9 +188,121 @@ export function HustlerLeaderboardView({
         </div>
       </div>
 
-      {/* Leaderboard Table / Cards */}
+      {/* Leaderboard Table (Desktop) & Cards (Mobile) */}
       <div className="rounded-2xl border border-white/[0.08] bg-[#151821] overflow-hidden shadow-xl">
-        <div className="overflow-x-auto">
+        {/* Mobile View: Responsive Builder Cards */}
+        <div className="block md:hidden divide-y divide-white/[0.06]">
+          {filteredUsers.length === 0 && (
+            <div className="p-8 text-center text-[#848B9B]">
+              {!isLiveSynced ? (
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <RefreshCw className="h-6 w-6 text-[#7C5CFC] animate-spin" />
+                  <span className="text-xs font-medium text-[#A78BFA]">Querying Monad Testnet Onchain Handlers...</span>
+                </div>
+              ) : (
+                <div className="text-xs">No builders registered onchain yet matching your filter.</div>
+              )}
+            </div>
+          )}
+
+          {filteredUsers.map((user) => (
+            <div key={user.address} className="p-4 space-y-3 hover:bg-white/[0.02] transition-colors">
+              {/* Header: Rank + Avatar + Name + Profile Button */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg font-mono text-xs font-bold shrink-0">
+                    {user.rank === 1 && (
+                      <span className="text-[#F59E0B] flex items-center justify-center h-full w-full rounded-lg bg-amber-500/10 border border-amber-500/20">
+                        🥇
+                      </span>
+                    )}
+                    {user.rank === 2 && (
+                      <span className="text-gray-300 flex items-center justify-center h-full w-full rounded-lg bg-gray-500/10 border border-gray-500/20">
+                        🥈
+                      </span>
+                    )}
+                    {user.rank === 3 && (
+                      <span className="text-amber-700 flex items-center justify-center h-full w-full rounded-lg bg-amber-800/10 border border-amber-800/20">
+                        🥉
+                      </span>
+                    )}
+                    {user.rank > 3 && <span className="text-[#848B9B]">#{user.rank}</span>}
+                  </div>
+
+                  <img
+                    src={user.avatar}
+                    alt={user.handle}
+                    className="h-9 w-9 rounded-full border border-white/[0.1] object-cover shrink-0"
+                  />
+
+                  <div>
+                    <div className="flex items-center gap-1 font-bold text-white text-xs">
+                      <span>{user.handle}</span>
+                      <ShieldCheck className="h-3.5 w-3.5 text-[#7C5CFC]" />
+                    </div>
+                    <span className="font-mono text-[10px] text-[#848B9B]">
+                      {user.address.slice(0, 6)}...{user.address.slice(-4)}
+                    </span>
+                  </div>
+                </div>
+
+                {onSelectUser && (
+                  <button
+                    onClick={() => onSelectUser(user.address)}
+                    className="flex items-center gap-1 rounded-lg border border-[#7C5CFC]/30 bg-[#7C5CFC]/15 px-3 py-1.5 font-mono text-[11px] font-semibold text-[#A78BFA] hover:bg-[#7C5CFC] hover:text-white transition-all active:scale-[0.98] shrink-0"
+                  >
+                    <span>Profile</span>
+                    <ArrowUpRight className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+
+              {/* Stats Row in Mobile Card */}
+              <div className="grid grid-cols-3 gap-2 rounded-xl border border-white/[0.06] bg-[#0E1015]/60 p-2.5 text-center">
+                <div>
+                  <span className="block text-[9px] uppercase font-semibold text-[#848B9B]">Earned</span>
+                  <span className="font-mono text-xs font-bold text-emerald-400">
+                    ${user.totalEarningsUsdt.toLocaleString()}
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-[9px] uppercase font-semibold text-[#848B9B]">Proofs</span>
+                  <span className="font-mono text-xs font-bold text-white flex items-center justify-center gap-1">
+                    <Award className="h-3 w-3 text-[#A78BFA]" />
+                    <span>{user.sbtCount} SBT</span>
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-[9px] uppercase font-semibold text-[#848B9B]">Rating</span>
+                  <span className="font-mono text-xs font-bold text-white flex items-center justify-center gap-0.5">
+                    <Star className="h-3 w-3 fill-[#F59E0B] text-[#F59E0B]" />
+                    <span>{user.rating.toFixed(1)}</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Bottom Row: Mined + Explorer Link */}
+              <div className="flex items-center justify-between text-[11px] text-[#848B9B] pt-0.5">
+                <div className="flex items-center gap-1 text-[#F87171] font-mono font-bold">
+                  <Flame className="h-3.5 w-3.5" />
+                  <span>+{user.hustleMined.toFixed(1)} $HUSTLE Mined</span>
+                </div>
+                <a
+                  href={`https://testnet.monadscan.com/tx/${user.recentTxHash}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1 text-[#7C5CFC] hover:underline font-mono"
+                >
+                  <span>MonadScan</span>
+                  <ExternalLink className="h-2.5 w-2.5" />
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop View: Full High-Density Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="border-b border-white/[0.07] bg-[#1B1E2B]/50 uppercase tracking-wider text-[10px] font-semibold text-[#848B9B]">
               <tr>
@@ -338,6 +450,7 @@ export function HustlerLeaderboardView({
           </table>
         </div>
       </div>
+
 
       {/* Community Callout Footer */}
       <div className="rounded-2xl border border-white/[0.08] bg-[#151821] p-6 flex flex-col sm:flex-row items-center justify-between gap-4">

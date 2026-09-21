@@ -177,8 +177,8 @@ export function TokenomicsView() {
                 title="Copy token contract address"
                 className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-[#0E1015] px-2.5 py-1 font-mono text-xs text-[#F9FAFB] hover:border-white/[0.18] transition-colors"
               >
-                <span>{contractAddress}</span>
-                {copied ? <Check className="h-3.5 w-3.5 text-[#34D399]" /> : <Copy className="h-3.5 w-3.5 text-[#848B9B]" />}
+                <span className="truncate max-w-[190px] xs:max-w-[250px] sm:max-w-none">{contractAddress}</span>
+                {copied ? <Check className="h-3.5 w-3.5 text-[#34D399] shrink-0" /> : <Copy className="h-3.5 w-3.5 text-[#848B9B] shrink-0" />}
               </button>
               <a
                 href={`https://testnet.monadscan.com/address/${contractAddress}`}

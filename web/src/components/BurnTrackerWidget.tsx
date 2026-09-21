@@ -402,7 +402,7 @@ export function BurnTrackerWidget({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 tabular-numbers text-[11px] text-[#848B9B] self-end sm:self-center">
+                <div className="flex items-center justify-between sm:justify-end gap-3 tabular-numbers text-[11px] text-[#848B9B] w-full sm:w-auto pt-1 sm:pt-0 border-t border-white/[0.04] sm:border-0">
                   <span>{item.time}</span>
                   <a
                     href={`https://testnet.monadscan.com/tx/${item.tx}`}
