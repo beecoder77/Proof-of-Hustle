@@ -41,6 +41,7 @@ contract GigEscrowTest is Test {
 
         sbt.setEscrowContract(address(escrow));
         hustleToken.setMinter(address(escrow), true);
+        burnPool.setEscrowContract(address(escrow));
 
         escrow.setJuror(juror1, true);
         escrow.setJuror(juror2, true);
@@ -353,5 +354,153 @@ contract GigEscrowTest is Test {
 
         // Creator receives 100% refund
         assertEq(mockUsdt.balanceOf(creator) - creatorBalBefore, 1000 * 1e18);
+    }
+
+    function testCreatorCannotClaimOwnGig() public {
+        vm.startPrank(creator);
+        mockUsdt.approve(address(escrow), 500 * 1e18);
+        uint256 gigId = escrow.createGig(
+            address(mockUsdt),
+            uint96(500 * 1e18),
+            GigEscrow.GigType.FCFS,
+            false,
+            uint32(block.timestamp + 2 days),
+            "ipfs://QmFcfs"
+        );
+
+        vm.expectRevert(GigEscrow.CreatorCannotClaim.selector);
+        escrow.claimTask(gigId);
+        vm.stopPrank();
+    }
+
+    function testCreatorCannotSubmitToOwnGig() public {
+        vm.startPrank(creator);
+        mockUsdt.approve(address(escrow), 500 * 1e18);
+        uint256 gigId = escrow.createGig(
+            address(mockUsdt),
+            uint96(500 * 1e18),
+            GigEscrow.GigType.CONTEST,
+            false,
+            uint32(block.timestamp + 2 days),
+            "ipfs://QmContest"
+        );
+
+        vm.expectRevert(GigEscrow.CreatorCannotSubmit.selector);
+        escrow.submitWork(gigId, "ipfs://QmWork", false, bytes32(0));
+        vm.stopPrank();
+    }
+
+    function testCreatorCannotHypeOwnGig() public {
+        vm.startPrank(creator);
+        mockUsdt.approve(address(escrow), 500 * 1e18);
+        uint256 gigId = escrow.createGig(
+            address(mockUsdt),
+            uint96(500 * 1e18),
+            GigEscrow.GigType.CONTEST,
+            false,
+            uint32(block.timestamp + 2 days),
+            "ipfs://QmContest"
+        );
+
+        hustleToken.approve(address(escrow), 100 * 1e18);
+        vm.expectRevert(GigEscrow.CreatorCannotHype.selector);
+        escrow.stakeHype(gigId, 100 * 1e18);
+        vm.stopPrank();
+    }
+
+    function testCannotStakeHypeAfterDeadline() public {
+        vm.startPrank(creator);
+        mockUsdt.approve(address(escrow), 500 * 1e18);
+        uint256 gigId = escrow.createGig(
+            address(mockUsdt),
+            uint96(500 * 1e18),
+            GigEscrow.GigType.CONTEST,
+            false,
+            uint32(block.timestamp + 2 days),
+            "ipfs://QmContest"
+        );
+        vm.stopPrank();
+
+        // Warp past deadline
+        vm.warp(block.timestamp + 3 days);
+
+        vm.startPrank(curator1);
+        hustleToken.approve(address(escrow), 100 * 1e18);
+        vm.expectRevert(GigEscrow.InvalidDeadline.selector);
+        escrow.stakeHype(gigId, 100 * 1e18);
+        vm.stopPrank();
+    }
+
+    function testCancelGigRefundsCreator() public {
+        vm.startPrank(creator);
+        mockUsdt.approve(address(escrow), 500 * 1e18);
+        uint256 gigId = escrow.createGig(
+            address(mockUsdt),
+            uint96(500 * 1e18),
+            GigEscrow.GigType.CONTEST,
+            false,
+            uint32(block.timestamp + 2 days),
+            "ipfs://QmContest"
+        );
+
+        uint256 creatorBalBefore = mockUsdt.balanceOf(creator);
+
+        // Cancel with 0 submissions
+        escrow.cancelGig(gigId);
+        assertEq(mockUsdt.balanceOf(creator) - creatorBalBefore, 500 * 1e18);
+
+        GigEscrow.Gig memory gig = escrow.getGig(gigId);
+        assertEq(gig.status, uint8(GigEscrow.GigStatus.CANCELED));
+        vm.stopPrank();
+    }
+
+    function testCannotCancelActiveGigWithSubmissionsBeforeDeadline() public {
+        vm.startPrank(creator);
+        mockUsdt.approve(address(escrow), 500 * 1e18);
+        uint256 gigId = escrow.createGig(
+            address(mockUsdt),
+            uint96(500 * 1e18),
+            GigEscrow.GigType.CONTEST,
+            false,
+            uint32(block.timestamp + 2 days),
+            "ipfs://QmContest"
+        );
+        vm.stopPrank();
+
+        vm.prank(worker);
+        escrow.submitWork(gigId, "ipfs://QmWork", false, bytes32(0));
+
+        // Creator tries to cancel while active with submissions before deadline
+        vm.prank(creator);
+        vm.expectRevert(GigEscrow.CannotCancelActiveGig.selector);
+        escrow.cancelGig(gigId);
+    }
+
+    function testCancelAbandonedFCFSGigPastDeadline() public {
+        vm.startPrank(creator);
+        mockUsdt.approve(address(escrow), 500 * 1e18);
+        uint256 gigId = escrow.createGig(
+            address(mockUsdt),
+            uint96(500 * 1e18),
+            GigEscrow.GigType.FCFS,
+            false,
+            uint32(block.timestamp + 2 days),
+            "ipfs://QmFcfs"
+        );
+        vm.stopPrank();
+
+        vm.prank(worker);
+        escrow.claimTask(gigId);
+
+        // Worker abandons, time passes deadline
+        vm.warp(block.timestamp + 3 days);
+
+        uint256 creatorBalBefore = mockUsdt.balanceOf(creator);
+        vm.prank(creator);
+        escrow.cancelGig(gigId);
+
+        assertEq(mockUsdt.balanceOf(creator) - creatorBalBefore, 500 * 1e18);
+        GigEscrow.Gig memory gig = escrow.getGig(gigId);
+        assertEq(gig.status, uint8(GigEscrow.GigStatus.CANCELED));
     }
 }

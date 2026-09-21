@@ -58,6 +58,21 @@ export function SubmissionDrawer({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedHash, setCopiedHash] = useState<string | null>(null);
 
+  const isCreator =
+    Boolean(currentUserAddress) &&
+    Boolean(gig?.creator) &&
+    gig?.creator.toLowerCase() === currentUserAddress?.toLowerCase();
+
+  const isWorker =
+    Boolean(currentUserAddress) &&
+    Boolean(
+      gig?.winnerAddress || (submissions.length > 0 && submissions[0].hustler)
+    ) &&
+    (gig?.winnerAddress?.toLowerCase() === currentUserAddress?.toLowerCase() ||
+      submissions.some(
+        (s) => s.hustler.toLowerCase() === currentUserAddress?.toLowerCase()
+      ));
+
   // Sync sealed payload if available
   React.useEffect(() => {
     if (sealedData?.encryptedUri) {
@@ -324,7 +339,7 @@ export function SubmissionDrawer({
                                 : "Code Deliverable Submitted"}
                             </span>
 
-                            {gig.status !== "SETTLED" && (
+                            {isCreator && gig.status !== "SETTLED" && !sub.isWinner && (
                               <button
                                 onClick={() => onApprovePayout(gig.id)}
                                 className="flex items-center gap-1 rounded bg-[#10B981] px-2.5 py-1 text-xs font-semibold text-black hover:bg-[#34D399] transition-all active:scale-95 shadow-sm shadow-emerald-500/20"
@@ -473,19 +488,25 @@ export function SubmissionDrawer({
 
             {gig.status === "IN_REVIEW" && (
               <div className="space-y-2.5">
-                <button
-                  onClick={() => onApprovePayout(gig.id)}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#10B981] py-3 text-sm font-bold text-white shadow-lg shadow-[#10B981]/20 transition-all hover:bg-[#059669] active:scale-[0.98]"
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  <span>Approve Deliverables & Release Payout (Sub-Second)</span>
-                </button>
+                {isCreator ? (
+                  <button
+                    onClick={() => onApprovePayout(gig.id)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#10B981] py-3 text-sm font-bold text-white shadow-lg shadow-[#10B981]/20 transition-all hover:bg-[#059669] active:scale-[0.98]"
+                  >
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Approve Deliverables & Release Payout (Sub-Second)</span>
+                  </button>
+                ) : (
+                  <div className="rounded-xl border border-white/[0.08] bg-[#1B1E2B] p-3 text-center text-xs text-[#848B9B]">
+                    <span>Deliverable submitted • Awaiting creator review & approval</span>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   {onAutoRelease && (
                     <button
                       type="button"
-                      onClick={() => onAutoRelease(gig.id)}
+                      onClick={() => (currentUserAddress ? onAutoRelease(gig.id) : onConnect?.())}
                       className="flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 py-2 px-3 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 active:scale-[0.98] transition-all"
                       title="Trigger 72h anti-ghosting payout"
                     >
@@ -496,7 +517,7 @@ export function SubmissionDrawer({
                   {onRaiseDispute && (
                     <button
                       type="button"
-                      onClick={() => onRaiseDispute(gig.id)}
+                      onClick={() => (currentUserAddress ? onRaiseDispute(gig.id) : onConnect?.())}
                       className="flex items-center justify-center gap-1.5 rounded-xl border border-red-500/30 bg-red-500/10 py-2 px-3 text-xs font-semibold text-red-400 hover:bg-red-500/20 active:scale-[0.98] transition-all"
                       title="Escalate to Community Tribunal"
                     >

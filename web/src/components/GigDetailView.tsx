@@ -78,6 +78,16 @@ export function GigDetailView({
     Boolean(gig.creator) &&
     gig.creator.toLowerCase() === currentUserAddress?.toLowerCase();
 
+  const isWorker =
+    Boolean(currentUserAddress) &&
+    Boolean(
+      gig.winnerAddress || (submissions.length > 0 && submissions[0].hustler)
+    ) &&
+    (gig.winnerAddress?.toLowerCase() === currentUserAddress?.toLowerCase() ||
+      submissions.some(
+        (s) => s.hustler.toLowerCase() === currentUserAddress?.toLowerCase()
+      ));
+
   // Sync sealed payload if available from Mera Passkey PRF drawer
   React.useEffect(() => {
     if (sealedData?.encryptedUri) {
@@ -355,11 +365,17 @@ export function GigDetailView({
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setActiveTab("submissions")}
+                      onClick={() => {
+                        if (!currentUserAddress) {
+                          onConnect?.();
+                        } else {
+                          setActiveTab("submissions");
+                        }
+                      }}
                       className="flex items-center gap-1.5 rounded-xl bg-[#7C5CFC] px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-[#7C5CFC]/25 hover:bg-[#9073FD] transition-all active:scale-[0.98]"
                     >
                       <Send className="h-3.5 w-3.5" />
-                      <span>Submit Deliverable</span>
+                      <span>{currentUserAddress ? "Submit Deliverable" : "Connect Wallet to Submit"}</span>
                     </button>
                   </div>
                 </div>
@@ -522,7 +538,7 @@ export function GigDetailView({
                           </div>
 
                           {/* Client Payout Action */}
-                          {isCreator && !sub.isWinner && gig.status !== "SETTLED" && (
+                          {isCreator && !sub.isWinner && gig.status !== "SETTLED" ? (
                             <button
                               onClick={() => onApprovePayout(gig.id)}
                               className="flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-emerald-600/25 transition-all active:scale-[0.98]"
@@ -530,7 +546,11 @@ export function GigDetailView({
                               <CheckCircle className="h-3.5 w-3.5" />
                               <span>Approve Payout (5★ SBT)</span>
                             </button>
-                          )}
+                          ) : !sub.isWinner && gig.status !== "SETTLED" ? (
+                            <span className="rounded-lg bg-white/[0.04] border border-white/[0.08] px-3 py-1.5 text-[11px] font-medium text-[#848B9B]">
+                              Awaiting Creator Review
+                            </span>
+                          ) : null}
                         </div>
 
                         {/* Deliverable URL or Commit */}
@@ -623,11 +643,17 @@ export function GigDetailView({
 
             {onAutoRelease && (
               <button
-                onClick={() => onAutoRelease(gig.id)}
+                onClick={() => {
+                  if (!currentUserAddress) {
+                    onConnect?.();
+                    return;
+                  }
+                  onAutoRelease(gig.id);
+                }}
                 className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 active:scale-[0.98] transition-all"
               >
                 <Clock className="h-3.5 w-3.5" />
-                <span>Verify / Trigger Auto-Release</span>
+                <span>{currentUserAddress ? "Verify / Trigger Auto-Release" : "Connect Wallet for Auto-Release"}</span>
               </button>
             )}
           </div>
@@ -649,13 +675,28 @@ export function GigDetailView({
             </p>
 
             {onHype && (
-              <button
-                onClick={() => onHype(gig.id)}
-                className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/15 px-4 py-2.5 text-xs font-bold text-amber-300 hover:bg-amber-500/25 active:scale-[0.98] transition-all shadow-sm"
-              >
-                <Zap className="h-3.5 w-3.5 text-amber-400" />
-                <span>Stake Attention (+1 Hype)</span>
-              </button>
+              <div className="space-y-2">
+                <button
+                  onClick={() => {
+                    if (!currentUserAddress) {
+                      onConnect?.();
+                      return;
+                    }
+                    onHype(gig.id);
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/15 px-4 py-2.5 text-xs font-bold text-amber-300 hover:bg-amber-500/25 active:scale-[0.98] transition-all shadow-sm"
+                >
+                  <Zap className="h-3.5 w-3.5 text-amber-400" />
+                  <span>
+                    {currentUserAddress ? "Stake Attention (+1 Hype)" : "Connect Wallet to Stake Hype"}
+                  </span>
+                </button>
+                {!currentUserAddress && (
+                  <p className="text-[10px] text-center text-[#848B9B]">
+                    Connect your Monad wallet to stake hype with your own $HUSTLE
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
@@ -670,10 +711,16 @@ export function GigDetailView({
                 Either party can escalate this hustle to the decentralized Community Tribunal for Schelling-point jury arbitration.
               </p>
               <button
-                onClick={() => onRaiseDispute(gig.id)}
+                onClick={() => {
+                  if (!currentUserAddress) {
+                    onConnect?.();
+                    return;
+                  }
+                  onRaiseDispute(gig.id);
+                }}
                 className="w-full flex items-center justify-center gap-1 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-1.5 font-semibold text-red-300 hover:bg-red-500/20 transition-all text-[11px]"
               >
-                <span>Escalate to Community Tribunal</span>
+                <span>{currentUserAddress ? "Escalate to Community Tribunal" : "Connect Wallet to Escalate"}</span>
               </button>
             </div>
           )}

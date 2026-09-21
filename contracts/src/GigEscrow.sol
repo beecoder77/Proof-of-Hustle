@@ -137,6 +137,7 @@ contract GigEscrow is ReentrancyGuard, Ownable {
     event CurationRewardClaimed(uint256 indexed gigId, address indexed curator, uint256 reward);
     event DisputeRaised(uint256 indexed gigId, address indexed initiator, string reasonCid);
     event DisputeResolved(uint256 indexed gigId, address indexed winner, uint256 payout);
+    event GigCanceled(uint256 indexed gigId, address indexed creator, uint256 refundAmount);
 
     // Errors
     error ZeroAddress();
@@ -157,6 +158,10 @@ contract GigEscrow is ReentrancyGuard, Ownable {
     error InsufficientPayment();
     error TransferFailed();
     error SealedSubmissionRequiresHash();
+    error CreatorCannotClaim();
+    error CreatorCannotSubmit();
+    error CreatorCannotHype();
+    error CannotCancelActiveGig();
 
     constructor(
         address initialOwner,
@@ -249,6 +254,7 @@ contract GigEscrow is ReentrancyGuard, Ownable {
         if (gig.status != uint8(GigStatus.OPEN)) revert GigNotOpen();
         if (gig.gigType != uint8(GigType.FCFS)) revert GigNotOpen();
         if (block.timestamp > gig.deadline) revert InvalidDeadline();
+        if (msg.sender == gig.creator) revert CreatorCannotClaim();
 
         gig.hustler = msg.sender;
         gig.status = uint8(GigStatus.IN_PROGRESS);
@@ -267,6 +273,7 @@ contract GigEscrow is ReentrancyGuard, Ownable {
     ) external nonReentrant returns (uint256) {
         Gig storage gig = gigs[gigId];
         if (block.timestamp > gig.deadline) revert InvalidDeadline();
+        if (msg.sender == gig.creator) revert CreatorCannotSubmit();
 
         if (gig.gigType == uint8(GigType.FCFS)) {
             if (gig.status != uint8(GigStatus.IN_PROGRESS)) revert GigNotInProgress();
@@ -319,6 +326,8 @@ contract GigEscrow is ReentrancyGuard, Ownable {
             winningSubmissionId[gigId] = winningSubmission;
             gig.hustler = worker;
         }
+
+        if (worker == gig.creator) revert CreatorCannotClaim();
 
         gig.status = uint8(GigStatus.SETTLED);
         gig.finalRating = rating;
@@ -402,6 +411,8 @@ contract GigEscrow is ReentrancyGuard, Ownable {
         if (gig.status != uint8(GigStatus.OPEN) && gig.status != uint8(GigStatus.IN_PROGRESS)) {
             revert GigNotOpen();
         }
+        if (block.timestamp > gig.deadline) revert InvalidDeadline();
+        if (msg.sender == gig.creator) revert CreatorCannotHype();
 
         hustleToken.safeTransferFrom(msg.sender, address(this), amount);
 
@@ -457,6 +468,36 @@ contract GigEscrow is ReentrancyGuard, Ownable {
 
         _transferAsset(gig.token, msg.sender, reward);
         emit CurationRewardClaimed(gigId, msg.sender, reward);
+    }
+
+    /**
+     * @notice Cancel gig and recover escrow deposit
+     * @dev Only the gig creator can cancel. Allowed if:
+     *      - Gig is OPEN and (deadline expired OR submissionsCount == 0)
+     *      - Gig is IN_PROGRESS (FCFS) and deadline expired without submission
+     */
+    function cancelGig(uint256 gigId) external nonReentrant {
+        Gig storage gig = gigs[gigId];
+        if (msg.sender != gig.creator) revert NotCreator();
+
+        bool canCancel = false;
+        if (gig.status == uint8(GigStatus.OPEN)) {
+            if (block.timestamp > gig.deadline || gig.submissionsCount == 0) {
+                canCancel = true;
+            }
+        } else if (gig.status == uint8(GigStatus.IN_PROGRESS)) {
+            if (block.timestamp > gig.deadline) {
+                canCancel = true;
+            }
+        }
+
+        if (!canCancel) revert CannotCancelActiveGig();
+
+        gig.status = uint8(GigStatus.CANCELED);
+        uint256 refundAmount = gig.rewardAmount;
+        _transferAsset(gig.token, gig.creator, refundAmount);
+
+        emit GigCanceled(gigId, msg.sender, refundAmount);
     }
 
     /**

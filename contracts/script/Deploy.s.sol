@@ -62,6 +62,7 @@ contract DeployScript is Script {
         // 6. Configure Protocol Authorizations
         sbt.setEscrowContract(address(escrow));
         hustleToken.setMinter(address(escrow), true);
+        burnPool.setEscrowContract(address(escrow));
         console2.log("Protocol authorizations configured successfully.");
 
         // 7. Idempotent Initial Seeding (Check if gigs exist, NEVER seed twice)

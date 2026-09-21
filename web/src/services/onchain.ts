@@ -119,9 +119,10 @@ export async function registerHandleOnchain(
  */
 export async function stakeHypeOnchain(
   gigId: string,
-  amount?: string
+  amount?: string,
+  userAddress?: string
 ): Promise<RelayResponse> {
-  return callRelayApi("stakeHype", { gigId, amount });
+  return callRelayApi("stakeHype", { gigId, amount, user: userAddress });
 }
 
 /**
@@ -154,12 +155,14 @@ export async function submitWorkOnchain(
 export async function approvePayoutOnchain(
   gigId: string,
   winningSubmission?: number,
-  rating?: number
+  rating?: number,
+  callerAddress?: string
 ): Promise<RelayResponse> {
   return callRelayApi("approvePayout", {
     gigId,
     winningSubmission: winningSubmission || 1,
     rating: rating || 5,
+    callerAddress,
   });
 }
 

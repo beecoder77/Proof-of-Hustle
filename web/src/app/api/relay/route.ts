@@ -88,11 +88,18 @@ export async function POST(req: NextRequest) {
       }
 
       case "stakeHype": {
-        const { gigId, amount } = params || {};
+        const { gigId, amount, user } = params || {};
         if (!gigId) {
           return NextResponse.json(
             { success: false, error: "Missing gigId" },
             { status: 400 }
+          );
+        }
+
+        if (!user) {
+          return NextResponse.json(
+            { success: false, error: "Authentication required: Please connect your own wallet to stake hype." },
+            { status: 401 }
           );
         }
 
@@ -174,12 +181,37 @@ export async function POST(req: NextRequest) {
       }
 
       case "approvePayout": {
-        const { gigId, winningSubmission, rating } = params || {};
+        const { gigId, winningSubmission, rating, callerAddress } = params || {};
         if (!gigId) {
           return NextResponse.json(
             { success: false, error: "Missing gigId" },
             { status: 400 }
           );
+        }
+
+        // Security check: Verify that caller is the creator of the gig
+        try {
+          const gigData: any = await publicClient.readContract({
+            address: CONTRACTS.gigEscrow.address,
+            abi: CONTRACTS.gigEscrow.abi,
+            functionName: "getGig",
+            args: [BigInt(gigId)],
+          });
+          const gigCreator = (gigData?.creator || gigData?.[0] || "").toString().toLowerCase();
+
+          if (
+            callerAddress &&
+            gigCreator &&
+            callerAddress.toLowerCase() !== gigCreator &&
+            callerAddress.toLowerCase() !== account.address.toLowerCase()
+          ) {
+            return NextResponse.json(
+              { success: false, error: "Unauthorized: Only the verified gig creator can approve payout." },
+              { status: 403 }
+            );
+          }
+        } catch (e) {
+          console.warn("Could not verify gig creator onchain in relay:", e);
         }
 
         txHash = await walletClient.writeContract({

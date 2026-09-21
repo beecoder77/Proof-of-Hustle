@@ -29,6 +29,26 @@ contract ProtocolBurnPoolTest is Test {
         assertEq(burnPool.totalFeesReceived(), 10_000 * 1e18);
     }
 
+    function testUnauthorizedCannotNotifyFeeDeposit() public {
+        vm.prank(user);
+        vm.expectRevert(ProtocolBurnPool.NotAuthorized.selector);
+        burnPool.notifyFeeDeposit(address(hustleToken), 1000 * 1e18);
+    }
+
+    function testAuthorizedEscrowCanNotifyFeeDeposit() public {
+        address mockEscrow = address(0x99);
+        vm.prank(owner);
+        burnPool.setEscrowContract(mockEscrow);
+
+        vm.prank(owner);
+        hustleToken.transfer(address(burnPool), 2_000 * 1e18);
+
+        vm.prank(mockEscrow);
+        burnPool.notifyFeeDeposit(address(hustleToken), 2_000 * 1e18);
+
+        assertEq(burnPool.totalHustleBurned(), 2_000 * 1e18);
+    }
+
     function testBurnHeldHustle() public {
         vm.prank(owner);
         hustleToken.transfer(address(burnPool), 5_000 * 1e18);
@@ -43,5 +63,23 @@ contract ProtocolBurnPoolTest is Test {
         (bool ok, ) = address(burnPool).call{value: 2 ether}("");
         assertTrue(ok);
         assertEq(burnPool.totalFeesReceived(), 2 ether);
+    }
+
+    function testOwnerCanWithdrawFeeTokensForBuyback() public {
+        vm.deal(address(burnPool), 5 ether);
+        address treasury = address(0x88);
+
+        vm.prank(owner);
+        burnPool.withdrawFeeTokens(address(0), treasury, 3 ether);
+
+        assertEq(treasury.balance, 3 ether);
+        assertEq(address(burnPool).balance, 2 ether);
+    }
+
+    function testNonOwnerCannotWithdrawFeeTokens() public {
+        vm.deal(address(burnPool), 5 ether);
+        vm.prank(user);
+        vm.expectRevert();
+        burnPool.withdrawFeeTokens(address(0), user, 1 ether);
     }
 }

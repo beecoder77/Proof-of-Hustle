@@ -299,6 +299,11 @@ export default function Home() {
   }, []);
 
   const handleHype = async (gigId: string) => {
+    if (!connectedAddress) {
+      login();
+      return;
+    }
+
     setGigs((prev) =>
       prev.map((g) => (g.id === gigId ? { ...g, hypeCount: g.hypeCount + 1 } : g))
     );
@@ -306,7 +311,7 @@ export default function Home() {
     const target = gigs.find((g) => g.id === gigId);
 
     try {
-      const res = await stakeHypeOnchain(gigId);
+      const res = await stakeHypeOnchain(gigId, "100", connectedAddress);
       const txHash = res.success && res.txHash ? res.txHash : "";
 
       if (txHash) {
@@ -466,8 +471,22 @@ export default function Home() {
   };
 
   const handleApprovePayout = async (gigId: string) => {
+    if (!connectedAddress) {
+      login();
+      return;
+    }
+
     const target = gigs.find((g) => g.id === gigId);
     if (!target) return;
+
+    if (!target.creator || target.creator.toLowerCase() !== connectedAddress.toLowerCase()) {
+      triggerTxToast(
+        "Unauthorized Action",
+        "Only the verified creator of this gig can approve deliverables and release payout.",
+        ""
+      );
+      return;
+    }
 
     // Update gig to SETTLED
     setGigs((prev) =>
@@ -487,7 +506,7 @@ export default function Home() {
     setSelectedGig((prev) => (prev ? { ...prev, status: "SETTLED" } : null));
 
     try {
-      const res = await approvePayoutOnchain(gigId, 1, 5);
+      const res = await approvePayoutOnchain(gigId, 1, 5, connectedAddress);
       const txHash = res.success && res.txHash ? res.txHash : "";
 
       // Trigger celebration modal with authentic onchain tx
@@ -706,6 +725,10 @@ export default function Home() {
               setActiveNavTab("profile");
             }}
             onRaiseDispute={async (gigId) => {
+              if (!connectedAddress) {
+                login();
+                return;
+              }
               try {
                 const res = await raiseDisputeOnchain(gigId);
                 triggerTxToast(
@@ -721,6 +744,10 @@ export default function Home() {
               }
             }}
             onAutoRelease={async (gigId) => {
+              if (!connectedAddress) {
+                login();
+                return;
+              }
               try {
                 const res = await autoReleaseOnchain(gigId);
                 triggerTxToast(
