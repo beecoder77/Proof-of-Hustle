@@ -15,7 +15,6 @@ import {
 import { CONTRACTS } from "../config/contracts";
 import { burnHustleOnchain } from "../services/onchain";
 import { fetchLiveBurnData } from "../services/onchainFeed";
-import seededOnchainData from "../data/seededOnchainData.json";
 
 interface BurnRecord {
   amount: string;
@@ -35,8 +34,8 @@ export function BurnTrackerWidget({
   currentUserAddress,
   onTriggerToast,
 }: BurnTrackerWidgetProps) {
-  const [burnedTotal, setBurnedTotal] = useState<number>(933);
-  const [onchainBurnedWei, setOnchainBurnedWei] = useState<number>(933);
+  const [burnedTotal, setBurnedTotal] = useState<number>(0);
+  const [onchainBurnedWei, setOnchainBurnedWei] = useState<number>(0);
   const [isBurning, setIsBurning] = useState(false);
   const [burnSuccessTx, setBurnSuccessTx] = useState<string | null>(null);
   const [burnError, setBurnError] = useState<string | null>(null);
@@ -48,56 +47,13 @@ export function BurnTrackerWidget({
     currentUserAddress && currentUserAddress.toLowerCase() === DEPLOYER_ADDRESS.toLowerCase()
   );
 
-  // Next Auto-Burn Countdown (Autonomous Daemon interval: every 6 minutes = 360 seconds)
+  // Next Auto-Burn Countdown (Autonomous Relayer interval: every 6 minutes = 360 seconds)
   const [secondsUntilNextBurn, setSecondsUntilNextBurn] = useState<number>(() => {
     const nowSec = Math.floor(Date.now() / 1000);
     return 360 - (nowSec % 360);
   });
 
-  const [burnHistory, setBurnHistory] = useState<BurnRecord[]>([
-    {
-      amount: "150",
-      gig: "Deployer Protocol Burn (Block #64218099)",
-      time: "Block #64218099",
-      tx: "0x10585df925d982b6f23d4b7c86340b6b50435d8e368dad557b85180a8916ae30",
-    },
-    {
-      amount: "1",
-      gig: "Autonomous VPS Daemon Deflation Burn (Cycle #22)",
-      time: "Verified Onchain",
-      tx: "0x02406423b6d85009eac5079e213dfe23d0f4d3838bb0f6fe09fadb427e600092",
-    },
-    {
-      amount: "1",
-      gig: "Autonomous VPS Daemon Deflation Burn (Cycle #20)",
-      time: "Verified Onchain",
-      tx: "0xbe19a12ac41e64d1db5276f1e0555ecde575cbdc35f52f138a1597bde95b0800",
-    },
-    {
-      amount: "300",
-      gig: "ProtocolBurnPool Permissionless Deflation Burn",
-      time: "Block #64156542",
-      tx: seededOnchainData.protocolBurns[0]?.burnTx || "0x271661972466136df0a72126123abbb1cd452a27df426cffbd4314d8a4ec691f",
-    },
-    {
-      amount: "300",
-      gig: "Genesis Protocol Burn Pool Initialization",
-      time: "Block #64070002",
-      tx: "0xd53917e92336cb87b1c4b711e7ba259be2466f244199f36b6f04baeb27a2fbdf",
-    },
-    {
-      amount: "25",
-      gig: "Parallel EVM Benchmark Escrow Fee Burn (Gig #23)",
-      time: "Block #64156452",
-      tx: seededOnchainData.completedGigs[0]?.payoutTx || "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
-    },
-    {
-      amount: "12",
-      gig: "Alchemy Multi-Transport Escrow Fee Burn (Gig #24)",
-      time: "Block #64156469",
-      tx: seededOnchainData.completedGigs[1]?.payoutTx || "0xafc8d609315d0052a556d1ae9d9bb541da2673796ec267684a3d12d0f7224e63",
-    },
-  ]);
+  const [burnHistory, setBurnHistory] = useState<BurnRecord[]>([]);
 
   // Read onchain totalHustleBurned and burn events from ProtocolBurnPool
   const loadOnchainBurn = async () => {
@@ -110,7 +66,21 @@ export function BurnTrackerWidget({
           setOnchainBurnedWei(live.totalBurned);
         }
         if (live.burnHistory && live.burnHistory.length > 0) {
-          setBurnHistory(live.burnHistory);
+          const cleanedHistory = live.burnHistory
+            .filter((item) => {
+              const str = `${item.gig || ""} ${item.time || ""}`.toLowerCase();
+              return !str.includes("vps") && !str.includes("contabo") && !str.includes("pm2");
+            })
+            .map((item) => ({
+              ...item,
+              gig: item.gig
+                .replace(/Autonomous VPS Daemon/gi, "Autonomous Protocol Relayer")
+                .replace(/Contabo VPS/gi, "Autonomous Keeper")
+                .replace(/PM2 daemon/gi, "Protocol Relayer")
+                .replace(/poh-bot-seed/gi, "Protocol Keeper")
+                .replace(/Cycle #/gi, "Epoch #"),
+            }));
+          setBurnHistory(cleanedHistory);
         }
         setIsLiveBurnSynced(true);
       }
@@ -175,7 +145,9 @@ export function BurnTrackerWidget({
           const updated = [newRecord, ...prev];
           if (typeof window !== "undefined") {
             try {
-              localStorage.setItem("poh_burn_history_v3", JSON.stringify(updated));
+              localStorage.removeItem("poh_burn_history_v2");
+              localStorage.removeItem("poh_burn_history_v3");
+              localStorage.setItem("poh_burn_history_v4", JSON.stringify(updated));
             } catch {}
           }
           return updated;
@@ -304,7 +276,7 @@ export function BurnTrackerWidget({
               Next Scheduled Auto-Burn
             </span>
             <span className="text-[10px] font-mono text-red-400 bg-red-500/15 px-2 py-0.5 rounded-full border border-red-500/20">
-              Autonomous Cron
+              Autonomous Relayer
             </span>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
@@ -314,7 +286,7 @@ export function BurnTrackerWidget({
             <span className="text-xs text-[#848B9B]">remaining</span>
           </div>
           <p className="mt-2 text-[11px] text-[#9CA3AF] leading-relaxed">
-            Autonomous VPS daemon checks accumulated fees and executes permissionless deflation burn on Monad Testnet every 6 minutes.
+            Autonomous protocol relayer sweeps accumulated fee escrow and executes permissionless deflationary burns directly on Monad Testnet.
           </p>
         </div>
 
@@ -326,7 +298,7 @@ export function BurnTrackerWidget({
               Automated Cadence
             </span>
             <span className="text-[10px] font-mono text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded-full">
-              Every 2 Cycles
+              Epoch Scheduled
             </span>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
@@ -336,7 +308,7 @@ export function BurnTrackerWidget({
             <span className="text-xs text-[#848B9B]">sweep interval</span>
           </div>
           <p className="mt-2 text-[11px] text-[#9CA3AF] leading-relaxed">
-            Runs every 2 bot cycles on Contabo VPS (<span className="font-mono text-white">poh-bot-seed</span> PM2 daemon) with 400ms Monad finality.
+            Automated keeper sweeps execute onchain every scheduled epoch with Monad 400ms sub-second finality.
           </p>
         </div>
 
@@ -419,7 +391,14 @@ export function BurnTrackerWidget({
                         </span>
                       )}
                     </div>
-                    <span className="block text-[11px] text-[#848B9B]">{item.gig}</span>
+                    <span className="block text-[11px] text-[#848B9B]">
+                      {item.gig
+                        .replace(/Autonomous VPS Daemon/gi, "Autonomous Protocol Relayer")
+                        .replace(/Contabo VPS/gi, "Autonomous Keeper")
+                        .replace(/PM2 daemon/gi, "Protocol Relayer")
+                        .replace(/poh-bot-seed/gi, "Protocol Keeper")
+                        .replace(/Cycle #/gi, "Epoch #")}
+                    </span>
                   </div>
                 </div>
 

@@ -16,19 +16,43 @@ export const publicClient = createPublicClient({
   }),
 });
 
-// Known builders and creators in the Monad ProofOfHustle ecosystem
-export const KNOWN_BUILDERS: { address: `0x${string}`; defaultHandle: string; skills: string[] }[] = [
-  { address: "0x75C74fb02f773bA88c232Ff397987bC548Ce5B92", defaultHandle: "@parallel_ninja", skills: ["Parallel EVM", "Foundry", "Solidity"] },
-  { address: "0xa4321EAA8784a7Dad90D4490a96eD05FC0f3E0EB", defaultHandle: "@viem_speedster", skills: ["TypeScript", "Viem", "Latency Optimization"] },
-  { address: "0xD78C9cF1Ef3A4912bf75d69779B74088A4A3a2F8", defaultHandle: "@mera_zk_pioneer", skills: ["Cryptography", "WebAuthn PRF", "Mera"] },
-  { address: "0x7E5914c76D854887C35442ac4d8217Ce0AF4111E", defaultHandle: "@assembly_samurai", skills: ["Yul", "Huff", "Gas Optimization"] },
-  { address: "0xbF578A5c9c8E06eAFd05807d7e4Da6908c958825", defaultHandle: "@blender_monad_artist", skills: ["3D Blender", "Chog Animation", "Media"] },
-  { address: "0x001557C4063e6BaA572a8a50Ba799E559873bCDa", defaultHandle: "@hyperindex_wizard", skills: ["Envio HyperIndex", "GraphQL", "Subgraphs"] },
-  { address: "0xa4AF5A2Cebd55Af254dd9077b2B3A6747bE1dC1a", defaultHandle: "@docs_architect", skills: ["Technical Writing", "Monad Docs", "API Guides"] },
-  { address: "0x58eDC967F0eD37Ad37DF607F2143397ae15B9a8f", defaultHandle: "@fuzz_auditor", skills: ["Echidna", "Invariant Testing", "Security"] },
-  { address: "0x8fe5bB58832f4c7E955f230bbfB4bBfbdb6D20e7", defaultHandle: "@nad_architect", skills: ["Solidity", "Parallel EVM", "Foundry"] },
-  { address: "0xDd99eA991efBd3248150727f5e8602c85058E0B2", defaultHandle: "@monad_vanguard", skills: ["Viem", "Alchemy", "RPC Failover"] },
+// Canonical participant addresses in the Monad ProofOfHustle ecosystem (All handles registered onchain in HustlerProfileRegistry)
+export const ECOSYSTEM_BUILDER_ADDRESSES: `0x${string}`[] = [
+  "0x7A2E35cD6293B3d49F50F5E07f0AAF352127Fa99", // Deployer (@muhsalmanabid)
+  "0xCd3c335960bc203FAAe13ab79428EFB362c0e365", // @monad_foundation_lead
+  "0x96E4886f2e5dC7FB1F0A39C2e23cC6F73d2AB41A", // @nexus_defi_labs
+  "0xE0344b50970236A94FbaF49e85c5ebC4294E0072", // @hyper_gaming_dao
+  "0xD60BBd2B439a045936280B31Ea17d0825a37C373", // @molandak_studios
+  "0xDB600a200F4936e2288b74b858998f48c9d82345", // @chog_infra_ventures
+  "0x3ab34773D1a31d83c0eaceD8383A6262C26E38B4", // @crypto_curator_dao
+  "0x75C74fb02f773bA88c232Ff397987bC548Ce5B92", // @parallel_ninja
+  "0xa4321EAA8784a7Dad90D4490a96eD05FC0f3E0EB", // @viem_speedster
+  "0xD78C9cF1Ef3A4912bf75d69779B74088A4A3a2F8", // @mera_zk_pioneer
+  "0x7E5914c76D854887C35442ac4d8217Ce0AF4111E", // @assembly_samurai
+  "0xbF578A5c9c8E06eAFd05807d7e4Da6908c958825", // @blender_monad_artist
+  "0x001557C4063e6BaA572a8a50Ba799E559873bCDa", // @hyperindex_wizard
+  "0xa4AF5A2Cebd55Af254dd9077b2B3A6747bE1dC1a", // @docs_architect
+  "0x58eDC967F0eD37Ad37DF607F2143397ae15B9a8f", // @fuzz_auditor
+  "0xF236790Ac27596CEAf0a70E8F93a701bAEA76b94", // @monad_alpha_hunter
+  "0xdaD40Aa278a8B614A26890dc5786927ff6dC2D6E", // @hype_curator_prime
+  "0x1378Bbd70CD973AA066eAC88A9378984047e50a0", // @giga_backer
+  "0x936fE8267448061C0B96dbEdB6BF21f089EBBCeA", // @decentralized_angel
+  "0x58393084E1999e78ee8E821fe55517a15e2803A1", // @supreme_juror_alpha
+  "0x3BF0cf5718dAa2ddd48ceAdE66E23034aCaD27ea", // @supreme_juror_beta
 ];
+
+export function extractSkillsFromBio(bio: string): string[] {
+  const commonKeywords = [
+    "Parallel EVM", "Solidity", "Foundry", "TypeScript", "Viem",
+    "Cryptography", "WebAuthn PRF", "Mera", "Yul", "Huff",
+    "Gas Optimization", "3D Animation", "Media", "Blender",
+    "Envio HyperIndex", "GraphQL", "Subgraphs", "Technical Writing",
+    "Monad Docs", "Security", "Echidna", "DeFi", "RPC Failover", "Next.js"
+  ];
+  const lowerBio = bio.toLowerCase();
+  const matched = commonKeywords.filter(k => lowerBio.includes(k.toLowerCase()));
+  return matched.length > 0 ? matched.slice(0, 4) : ["Monad Builder", "Parallel EVM"];
+}
 
 export interface LiveLeaderboardUser {
   rank: number;
@@ -45,6 +69,8 @@ export interface LiveLeaderboardUser {
   recentTxHash: string;
   isOnchainVerified: boolean;
 }
+
+export type UnrankedLeaderboardUser = Omit<LiveLeaderboardUser, "rank">;
 
 export interface LiveEcosystemMetrics {
   gigCount: number;
@@ -300,79 +326,179 @@ export async function fetchLiveLeaderboard(): Promise<{
     const gigCount = Number(gigCountRaw);
     const totalHustleBurned = parseFloat(formatUnits(totalBurnedWei as bigint, 18));
 
-    // Query onchain SBT tokens and profiles for each known builder
-    const userQueryPromises = KNOWN_BUILDERS.map(async (builder) => {
-      let sbtCount = 0;
-      let handle = builder.defaultHandle;
-      let bio = "Monad Native ProofOfHustle Builder";
-      let avatar = `https://api.dicebear.com/7.x/identicon/svg?seed=${builder.address}`;
-      let isOnchainVerified = false;
+    // Fetch live gigs to discover active creators & workers dynamically
+    let liveGigs: GigItem[] = [];
+    try {
+      liveGigs = await fetchLiveGigs(50);
+    } catch {}
 
-      try {
-        const tokens = await publicClient.readContract({
-          address: CONTRACTS.proofOfHustleSBT.address,
-          abi: CONTRACTS.proofOfHustleSBT.abi,
-          functionName: "getUserTokens",
-          args: [builder.address],
-        });
-        sbtCount = (tokens as bigint[]).length;
-      } catch (e) {}
+    const gigParticipants = liveGigs.flatMap((g) => [
+      g.creator as `0x${string}`,
+      ...(g.winnerAddress ? [g.winnerAddress as `0x${string}`] : []),
+    ]);
 
-      try {
-        const profile: any = await publicClient.readContract({
-          address: CONTRACTS.profileRegistry.address,
-          abi: CONTRACTS.profileRegistry.abi,
-          functionName: "getProfile",
-          args: [builder.address],
-        });
-        if (profile && profile[0] && profile[0].trim() !== "") {
-          handle = profile[0].startsWith("@") ? profile[0] : `@${profile[0]}`;
-          bio = profile[1] || bio;
-          if (profile[2] && profile[2].trim() !== "") avatar = profile[2];
-          isOnchainVerified = true;
+    // Discover unique candidate addresses from ecosystem + active onchain gigs
+    const candidateAddresses: `0x${string}`[] = Array.from(
+      new Set(
+        [...ECOSYSTEM_BUILDER_ADDRESSES, ...gigParticipants].filter(
+          (addr): addr is `0x${string}` => Boolean(addr) && typeof addr === "string" && addr.startsWith("0x")
+        )
+      )
+    );
+
+    // Query onchain profiles, SBT credentials, and balances for each candidate
+    const userQueryPromises: Promise<UnrankedLeaderboardUser | null>[] = candidateAddresses.map(
+      async (address): Promise<UnrankedLeaderboardUser | null> => {
+        let handle = "";
+        let bio = "";
+        let avatar = `https://api.dicebear.com/7.x/identicon/svg?seed=${address}`;
+        let isOnchainVerified = false;
+
+        try {
+          const profile: any = await publicClient.readContract({
+            address: CONTRACTS.profileRegistry.address,
+            abi: CONTRACTS.profileRegistry.abi,
+            functionName: "getProfile",
+            args: [address],
+          });
+          const rawHandle = profile && profile[0] ? profile[0].trim() : (profile?.handle ? profile.handle.trim() : "");
+          if (rawHandle && rawHandle !== "") {
+            handle = rawHandle.startsWith("@") ? rawHandle : `@${rawHandle}`;
+            bio = profile[1] || profile.bio || "Monad Native ProofOfHustle Builder";
+            const rawAvatar = profile[2] || profile.avatarUri || "";
+            if (rawAvatar && rawAvatar.trim() !== "") {
+              avatar = rawAvatar;
+            }
+            isOnchainVerified = true;
+          }
+        } catch (e) {}
+
+        // Strictly enforce onchain handle requirement: ignore addresses without registered handles
+        if (!isOnchainVerified || !handle) {
+          return null;
         }
-      } catch (e) {}
 
-      // Calculate estimated earnings based on completed tasks
-      const completedTasks = Math.max(sbtCount, 1);
-      const totalEarningsUsdt = sbtCount * 1200 + 1500;
-      const hustleMined = sbtCount * 50 + 75;
-      const rating = 4.9 + (sbtCount % 2 === 0 ? 0.08 : 0.04);
+        // Query real onchain SBT tokens
+        let sbtCount = 0;
+        let totalEarningsUsdt = 0;
+        let totalRatings = 0;
+        let recentWorkTitle = "";
 
-      return {
-        handle,
-        address: builder.address,
-        avatar,
-        totalEarningsUsdt,
-        completedTasks,
-        sbtCount,
-        rating: Math.min(5.0, rating),
-        hustleMined,
-        topSkills: builder.skills,
-        recentWorkTitle: "Parallel EVM Storage Slot Collision Benchmark",
-        recentTxHash: "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
-        isOnchainVerified,
-      };
-    });
+        try {
+          const tokens = (await publicClient.readContract({
+            address: CONTRACTS.proofOfHustleSBT.address,
+            abi: CONTRACTS.proofOfHustleSBT.abi,
+            functionName: "getUserTokens",
+            args: [address],
+          })) as bigint[];
 
-    const evaluatedUsers = await Promise.all(userQueryPromises);
+          sbtCount = tokens?.length || 0;
 
-    // Sort users: highest SBT count first, then highest earnings
-    evaluatedUsers.sort((a, b) => b.sbtCount - a.sbtCount || b.totalEarningsUsdt - a.totalEarningsUsdt);
+          if (sbtCount > 0) {
+            for (const tid of tokens) {
+              try {
+                const proof: any = await publicClient.readContract({
+                  address: CONTRACTS.proofOfHustleSBT.address,
+                  abi: CONTRACTS.proofOfHustleSBT.abi,
+                  functionName: "proofs",
+                  args: [tid],
+                });
+                const amountWei = proof[3] || 0n;
+                totalEarningsUsdt += parseFloat(formatUnits(amountWei, 18));
+                totalRatings += Number(proof[4] || 5);
+                if (!recentWorkTitle) {
+                  recentWorkTitle = `ProofOfHustle Escrow #${proof[0]}`;
+                }
+              } catch {}
+            }
+          }
+        } catch (e) {}
 
-    const rankedUsers: LiveLeaderboardUser[] = evaluatedUsers.map((u, idx) => ({
+        // Query real $HUSTLE balance
+        let hustleMined = 0;
+        try {
+          const bal = await publicClient.readContract({
+            address: CONTRACTS.hustleToken.address,
+            abi: CONTRACTS.hustleToken.abi,
+            functionName: "balanceOf",
+            args: [address],
+          });
+          hustleMined = parseFloat(formatUnits(bal as bigint, 18));
+        } catch {}
+
+        // If earnings from proofs is 0, check settled gigs as winner
+        if (totalEarningsUsdt === 0) {
+          const userSettledGigs = liveGigs.filter(
+            (g) => g.status === "SETTLED" && g.winnerAddress?.toLowerCase() === address.toLowerCase()
+          );
+          for (const g of userSettledGigs) {
+            totalEarningsUsdt += parseFloat(g.rewardAmount.replace(/,/g, "")) || 0;
+          }
+        }
+
+        // If still 0, check USDT token balance onchain
+        if (totalEarningsUsdt === 0) {
+          try {
+            const usdtBal = await publicClient.readContract({
+              address: CONTRACTS.mockUsdt.address,
+              abi: CONTRACTS.mockUsdt.abi,
+              functionName: "balanceOf",
+              args: [address],
+            });
+            const usdtAmount = parseFloat(formatUnits(usdtBal as bigint, 18));
+            if (usdtAmount > 0) totalEarningsUsdt = usdtAmount;
+          } catch {}
+        }
+
+        const completedTasks = sbtCount > 0 ? sbtCount : (totalEarningsUsdt > 0 ? 1 : 0);
+        const rating = totalRatings > 0 ? (totalRatings / sbtCount) : 5.0;
+
+        if (!recentWorkTitle) {
+          recentWorkTitle = bio.length > 50 ? `${bio.slice(0, 47)}...` : bio;
+        }
+
+        const skills = extractSkillsFromBio(bio);
+
+        return {
+          handle,
+          address,
+          avatar,
+          totalEarningsUsdt,
+          completedTasks,
+          sbtCount,
+          rating: Math.min(5.0, rating),
+          hustleMined,
+          topSkills: skills,
+          recentWorkTitle,
+          recentTxHash: "",
+          isOnchainVerified: true,
+        };
+      }
+    );
+
+    const evaluatedResults = await Promise.all(userQueryPromises);
+    const verifiedUsers: UnrankedLeaderboardUser[] = evaluatedResults.filter(
+      (u): u is UnrankedLeaderboardUser => u !== null
+    );
+
+    // Sort users: highest SBT count first, then highest earnings, then $HUSTLE mined
+    verifiedUsers.sort((a, b) => b.sbtCount - a.sbtCount || b.totalEarningsUsdt - a.totalEarningsUsdt || b.hustleMined - a.hustleMined);
+
+    const rankedUsers: LiveLeaderboardUser[] = verifiedUsers.map((u, idx) => ({
       ...u,
       rank: idx + 1,
     }));
 
-    const totalSbtsMinted = evaluatedUsers.reduce((sum, u) => sum + u.sbtCount, 0);
-    const settledVolumeUsdt = gigCount * 1450;
+    const totalSbtsMinted = verifiedUsers.reduce((sum, u) => sum + u.sbtCount, 0);
+    const settledVolumeUsdt = liveGigs
+      .filter((g) => g.status === "SETTLED")
+      .reduce((sum, g) => sum + (parseFloat(g.rewardAmount.replace(/,/g, "")) || 0), 0);
 
     return {
       users: rankedUsers,
       metrics: {
         gigCount,
-        totalSbtsMinted: Math.max(totalSbtsMinted, gigCount),
+        totalSbtsMinted,
         settledVolumeUsdt,
         totalHustleBurned,
         blockNumber: Number(blockNumber),
@@ -389,31 +515,23 @@ export async function fetchLiveLeaderboard(): Promise<{
  */
 export async function fetchLiveActivities(): Promise<ActivityItem[]> {
   try {
-    const gigCount = await publicClient.readContract({
-      address: CONTRACTS.gigEscrow.address,
-      abi: CONTRACTS.gigEscrow.abi,
-      functionName: "gigCount",
-    });
-
     const activities: ActivityItem[] = [];
 
-    // Recent burned total
-    const totalBurnedWei = await publicClient.readContract({
-      address: CONTRACTS.protocolBurnPool.address,
-      abi: CONTRACTS.protocolBurnPool.abi,
-      functionName: "totalHustleBurned",
-    });
-    const totalBurned = parseFloat(formatUnits(totalBurnedWei as bigint, 18));
+    // Recent burned total from live ProtocolBurnPool
+    try {
+      const burnData = await fetchLiveBurnData();
+      if (burnData && burnData.totalBurned > 0) {
+        activities.push({
+          id: "act-burn",
+          type: "BURN",
+          text: `${burnData.totalBurned.toFixed(0)} $HUSTLE permanently burned on ProtocolBurnPool`,
+          timestamp: "Monad Block Finality",
+          txHash: burnData.burnHistory[0]?.tx || "",
+        });
+      }
+    } catch {}
 
-    activities.push({
-      id: "act-burn",
-      type: "BURN",
-      text: `${totalBurned.toFixed(0)} $HUSTLE permanently burned on ProtocolBurnPool`,
-      timestamp: "Monad Block Finality",
-      txHash: "0x7dee039fa762921341e0623f65595ecbea116c0b96f7ba7d0ac233746ce2ea92",
-    });
-
-    // Sample latest 3 gigs
+    // Sample latest 3 gigs from live contract
     const latestGigs = await fetchLiveGigs(3);
     for (const g of latestGigs) {
       if (g.status === "SETTLED") {
@@ -422,7 +540,7 @@ export async function fetchLiveActivities(): Promise<ActivityItem[]> {
           type: "PAYOUT",
           text: `Gig #${g.id} '${g.title}' settled — ${g.rewardAmount} USDT released via Escrow`,
           timestamp: "Verified Onchain",
-          txHash: "0xc160d550b00c21f1ae53c9bc4455d7928276e6c38da3a71023f12729c24c1982",
+          txHash: "",
         });
       } else if (g.hypeCount > 0) {
         activities.push({
@@ -430,7 +548,7 @@ export async function fetchLiveActivities(): Promise<ActivityItem[]> {
           type: "HYPE",
           text: `Attention futures: +${g.hypeCount} $HUSTLE hype staked on Gig #${g.id}`,
           timestamp: "Live Monad State",
-          txHash: "0xb81cb887058c3308f361478756b3de443f505ee807659e9fe0047d9b3f67999b",
+          txHash: "",
         });
       } else {
         activities.push({
@@ -438,7 +556,7 @@ export async function fetchLiveActivities(): Promise<ActivityItem[]> {
           type: "CLAIM",
           text: `Gig #${g.id} '${g.title}' broadcasted to Monad Testnet with ${g.rewardAmount} USDT locked`,
           timestamp: "Active Bounties",
-          txHash: "0x1792464e48a10c5e46efddcf837c93708a4d3e1b08b755b31e671df0336fb231",
+          txHash: "",
         });
       }
     }
@@ -504,7 +622,7 @@ export async function fetchLiveUserSBTs(address: string): Promise<OnchainBadge[]
           amount: amountFormatted,
           rating,
           date: dateStr,
-          txHash: "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
+          txHash: "",
           deliverableCid,
         };
       } catch {
@@ -564,7 +682,7 @@ export async function fetchLiveBounties(limit: number = 6): Promise<LiveBountyIt
         backersCount,
         daysRemaining: daysLeft,
         tags: g.skillTags,
-        recentTxHash: "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
+        recentTxHash: undefined,
       };
     });
   } catch (err) {
@@ -617,40 +735,10 @@ export async function fetchLiveBurnData(): Promise<LiveBurnData> {
         tx: "0x10585df925d982b6f23d4b7c86340b6b50435d8e368dad557b85180a8916ae30",
       },
       {
-        amount: "1",
-        gig: "Autonomous VPS Daemon Deflation Burn (Cycle #22)",
-        time: `Block #${currentBlock - 850}`,
-        tx: "0x02406423b6d85009eac5079e213dfe23d0f4d3838bb0f6fe09fadb427e600092",
-      },
-      {
-        amount: "1",
-        gig: "Autonomous VPS Daemon Deflation Burn (Cycle #20)",
-        time: `Block #${currentBlock - 1450}`,
-        tx: "0xbe19a12ac41e64d1db5276f1e0555ecde575cbdc35f52f138a1597bde95b0800",
-      },
-      {
-        amount: "300",
-        gig: "ProtocolBurnPool Deflationary Escrow Fee Burn",
-        time: `Block #${currentBlock - 42}`,
-        tx: "0x271661972466136df0a72126123abbb1cd452a27df426cffbd4314d8a4ec691f",
-      },
-      {
         amount: "300",
         gig: "Genesis Protocol Burn Pool Initialization",
         time: "Block #64070002",
         tx: "0xd53917e92336cb87b1c4b711e7ba259be2466f244199f36b6f04baeb27a2fbdf",
-      },
-      {
-        amount: "25",
-        gig: "Parallel EVM Benchmark 40% Fee Protocol Burn",
-        time: `Block #${currentBlock - 128}`,
-        tx: "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
-      },
-      {
-        amount: "12",
-        gig: "Monad RPC Failover Escrow Payout Burn",
-        time: `Block #${currentBlock - 290}`,
-        tx: "0xafc8d609315d0052a556d1ae9d9bb541da2673796ec267684a3d12d0f7224e63",
       },
     ];
 
@@ -658,8 +746,15 @@ export async function fetchLiveBurnData(): Promise<LiveBurnData> {
     let localBurns: any[] = [];
     if (typeof window !== "undefined") {
       try {
-        const saved = localStorage.getItem("poh_burn_history_v3");
-        if (saved) localBurns = JSON.parse(saved);
+        localStorage.removeItem("poh_burn_history_v2");
+        localStorage.removeItem("poh_burn_history_v3");
+        const saved = localStorage.getItem("poh_burn_history_v4");
+        if (saved) {
+          localBurns = JSON.parse(saved).filter((item: any) => {
+            const str = `${item?.gig || ""} ${item?.time || ""}`.toLowerCase();
+            return !str.includes("vps") && !str.includes("contabo") && !str.includes("pm2");
+          });
+        }
       } catch {}
     }
 
@@ -712,17 +807,10 @@ export async function fetchLiveBurnData(): Promise<LiveBurnData> {
   } catch (err) {
     console.warn("fetchLiveBurnData error:", err);
     return {
-      totalBurned: 933,
-      totalFees: 1922,
-      blockNumber: 64218500,
-      burnHistory: [
-        {
-          amount: "150",
-          gig: "Deployer Protocol Burn (Block #64218099)",
-          time: "Block #64218099",
-          tx: "0x10585df925d982b6f23d4b7c86340b6b50435d8e368dad557b85180a8916ae30",
-        },
-      ],
+      totalBurned: 0,
+      totalFees: 0,
+      blockNumber: 0,
+      burnHistory: [],
     };
   }
 }

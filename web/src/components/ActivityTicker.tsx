@@ -4,10 +4,9 @@ import React, { useState, useEffect } from "react";
 import { Zap, Flame, CheckCircle, ShieldCheck } from "lucide-react";
 
 import { ActivityItem } from "../types";
-import seededOnchainData from "../data/seededOnchainData.json";
 import { fetchLiveActivities } from "../services/onchainFeed";
 
-const DEFAULT_ACTIVITIES: {
+const NETWORK_STATUS_ACTIVITIES: {
   icon: typeof CheckCircle;
   color: string;
   text: string;
@@ -15,39 +14,18 @@ const DEFAULT_ACTIVITIES: {
   tx: string;
 }[] = [
   {
-    icon: CheckCircle,
-    color: "text-[#34D399]",
-    text: `@nad_architect completed '${seededOnchainData.completedGigs[0]?.title}' — 2,500 USDT released via Escrow`,
-    time: "Block #64156452",
-    tx: seededOnchainData.completedGigs[0]?.payoutTx || "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
-  },
-  {
-    icon: Flame,
-    color: "text-[#FBBF24]",
-    text: `@monad_vanguard hyped '${seededOnchainData.completedGigs[0]?.title}' (+50 $HUSTLE staked)`,
-    time: "Block #64156450",
-    tx: seededOnchainData.completedGigs[0]?.hypeTx || "0x4151539e8afa03ee467d6f1ab02300715a0db5da3a0b2b9aad542932c95d5749",
-  },
-  {
-    icon: Flame,
-    color: "text-[#F87171]",
-    text: "769 $HUSTLE permanently burned on ProtocolBurnPool",
-    time: "Block #64211923",
-    tx: seededOnchainData.protocolBurns[0]?.burnTx || "0x271661972466136df0a72126123abbb1cd452a27df426cffbd4314d8a4ec691f",
+    icon: Zap as typeof CheckCircle,
+    color: "text-[#7C5CFC]",
+    text: "Connected to Monad Testnet (Chain ID 10143) • 400ms Sub-Second Finality Active",
+    time: "Live Ledger",
+    tx: "",
   },
   {
     icon: ShieldCheck,
-    color: "text-[#A78BFA]",
-    text: "Verified ERC-5192 Proof-of-Work SBT #1 minted to @nad_architect",
-    time: "Block #64156452",
-    tx: seededOnchainData.completedGigs[0]?.payoutTx || "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
-  },
-  {
-    icon: CheckCircle,
     color: "text-[#34D399]",
-    text: `Community Tribunal resolved dispute on Gig #28 in favor of worker @solidity_samurai`,
-    time: "Block #64156536",
-    tx: seededOnchainData.disputes[0]?.resolutionTx || "0x1fae8417c21418ffab6314bbbae355eaf99be494958126db58e879bad627c493",
+    text: "Onchain Escrow Vaults, SBT Credentials & Protocol Burns Active",
+    time: "Monad EVM",
+    tx: "",
   },
 ];
 
@@ -88,20 +66,20 @@ export function ActivityTicker({ customActivities }: ActivityTickerProps) {
       : liveActivities;
 
     if (!source || source.length === 0) {
-      return DEFAULT_ACTIVITIES;
+      return NETWORK_STATUS_ACTIVITIES;
     }
 
     const mapped = source.map((act) => {
-      let icon = Zap;
+      let icon = Zap as typeof CheckCircle;
       let color = "text-[#7C5CFC]";
       if (act.type === "PAYOUT") {
         icon = CheckCircle;
         color = "text-[#34D399]";
       } else if (act.type === "HYPE") {
-        icon = Flame;
+        icon = Flame as typeof CheckCircle;
         color = "text-[#FBBF24]";
       } else if (act.type === "BURN") {
-        icon = Flame;
+        icon = Flame as typeof CheckCircle;
         color = "text-[#F87171]";
       } else if (act.type === "CLAIM") {
         icon = ShieldCheck;
@@ -117,7 +95,7 @@ export function ActivityTicker({ customActivities }: ActivityTickerProps) {
       };
     });
 
-    return [...mapped, ...DEFAULT_ACTIVITIES];
+    return mapped;
   }, [customActivities, liveActivities]);
 
   useEffect(() => {
@@ -127,7 +105,7 @@ export function ActivityTicker({ customActivities }: ActivityTickerProps) {
     return () => clearInterval(timer);
   }, [items.length]);
 
-  const active = items[currentIndex % items.length];
+  const active = items[currentIndex % items.length] || NETWORK_STATUS_ACTIVITIES[0];
   const Icon = active.icon;
 
   return (
@@ -146,16 +124,20 @@ export function ActivityTicker({ customActivities }: ActivityTickerProps) {
 
         <div className="hidden sm:flex items-center gap-3 text-[#848B9B] tabular-numbers text-[11px]">
           <span>{active.time}</span>
-          <a
-            href={`https://testnet.monadscan.com/tx/${active.tx}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-[#7C5CFC] underline decoration-white/20 font-mono"
-          >
-            {active.tx.length > 16
-              ? `${active.tx.slice(0, 8)}...${active.tx.slice(-4)}`
-              : active.tx}
-          </a>
+          {active.tx && active.tx.startsWith("0x") ? (
+            <a
+              href={`https://testnet.monadscan.com/tx/${active.tx}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#7C5CFC] underline decoration-white/20 font-mono"
+            >
+              {active.tx.length > 16
+                ? `${active.tx.slice(0, 8)}...${active.tx.slice(-4)}`
+                : active.tx}
+            </a>
+          ) : (
+            <span className="text-[#34D399] font-mono text-[10px]">Monad Testnet</span>
+          )}
         </div>
       </div>
     </div>

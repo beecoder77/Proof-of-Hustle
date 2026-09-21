@@ -19,7 +19,6 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { CONTRACTS } from "../config/contracts";
-import seededOnchainData from "../data/seededOnchainData.json";
 import {
   fetchLiveLeaderboard,
   LiveLeaderboardUser,
@@ -41,8 +40,6 @@ export interface LeaderboardUser {
   recentTxHash: string;
 }
 
-const SEED_LEADERBOARD_DATA: LeaderboardUser[] = seededOnchainData.leaderboard as LeaderboardUser[];
-
 interface HustlerLeaderboardViewProps {
   onSelectUser?: (address: string) => void;
   onOpenProfile?: () => void;
@@ -54,13 +51,13 @@ export function HustlerLeaderboardView({
 }: HustlerLeaderboardViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilter, setSelectedFilter] = useState<string>("ALL");
-  const [users, setUsers] = useState<LeaderboardUser[]>(SEED_LEADERBOARD_DATA);
+  const [users, setUsers] = useState<LeaderboardUser[]>([]);
   const [metrics, setMetrics] = useState<LiveEcosystemMetrics>({
-    gigCount: 211,
-    totalSbtsMinted: 142,
-    settledVolumeUsdt: 22500,
-    totalHustleBurned: 769,
-    blockNumber: 64211923,
+    gigCount: 0,
+    totalSbtsMinted: 0,
+    settledVolumeUsdt: 0,
+    totalHustleBurned: 0,
+    blockNumber: 0,
   });
   const [isLiveSynced, setIsLiveSynced] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -206,6 +203,21 @@ export function HustlerLeaderboardView({
               </tr>
             </thead>
             <tbody className="divide-y divide-white/[0.06]">
+              {filteredUsers.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-[#848B9B]">
+                    {!isLiveSynced ? (
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <RefreshCw className="h-6 w-6 text-[#7C5CFC] animate-spin" />
+                        <span className="text-sm font-medium text-[#A78BFA]">Querying Monad Testnet Onchain Handlers...</span>
+                        <span className="text-xs text-[#848B9B]">Reading HustlerProfileRegistry (0x6781...1B6D)</span>
+                      </div>
+                    ) : (
+                      <div className="text-sm">No builders registered onchain yet matching your filter.</div>
+                    )}
+                  </td>
+                </tr>
+              )}
               {filteredUsers.map((user) => {
                 return (
                   <tr

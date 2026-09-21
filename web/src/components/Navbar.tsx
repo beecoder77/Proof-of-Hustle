@@ -83,14 +83,14 @@ export function Navbar({
               Hall of Fame
             </button>
             <button
-              onClick={() => setActiveTab("tribunal")}
+              onClick={() => setActiveTab("tokenomics")}
               className={`rounded-md px-2.5 py-1.5 transition-colors ${
-                activeTab === "tribunal"
+                activeTab === "tokenomics"
                   ? "bg-white/[0.08] text-[#F9FAFB]"
                   : "text-[#9CA3AF] hover:bg-white/[0.04] hover:text-[#F9FAFB]"
               }`}
             >
-              Tribunal
+              Tokenomics
             </button>
             <button
               onClick={() => setActiveTab("burn")}

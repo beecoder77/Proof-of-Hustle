@@ -3,6 +3,7 @@
 import React, { useEffect } from "react";
 import confetti from "canvas-confetti";
 import { Trophy, CheckCircle, ExternalLink, X, Share2 } from "lucide-react";
+import { CONTRACTS } from "../config/contracts";
 
 interface ProofOfWinModalProps {
   isOpen: boolean;
@@ -20,7 +21,7 @@ export function ProofOfWinModal({
   gigTitle,
   payoutAmount,
   rewardToken,
-  txHash = "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
+  txHash,
   sbtTokenId = "1",
 }: ProofOfWinModalProps) {
   useEffect(() => {
@@ -96,12 +97,12 @@ export function ProofOfWinModal({
           </a>
 
           <a
-            href={`https://testnet.monadscan.com/tx/${txHash}`}
+            href={txHash ? `https://testnet.monadscan.com/tx/${txHash}` : `https://testnet.monadscan.com/address/${CONTRACTS.gigEscrow.address}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-1 text-xs text-[#848B9B] hover:text-[#7C5CFC] pt-1"
           >
-            <span>View Verified Explorer Receipt</span>
+            <span>{txHash ? "View Verified Explorer Receipt" : "View Escrow Contract on MonadScan"}</span>
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>

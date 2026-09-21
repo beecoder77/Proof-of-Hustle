@@ -23,7 +23,6 @@ import {
 } from "../services/onchain";
 import { fetchLiveDisputes } from "../services/onchainFeed";
 import { CONTRACTS } from "../config/contracts";
-import seededOnchainData from "../data/seededOnchainData.json";
 
 interface DisputeItem {
   id: string;
@@ -51,54 +50,14 @@ interface CommunityTribunalModalProps {
   currentUserAddress: string;
 }
 
-const SEED_DISPUTES: DisputeItem[] = [
-  {
-    id: "disp-28",
-    gigId: "28",
-    gigTitle: seededOnchainData.disputes[0]?.title || "EVM Storage Collision Verification Dispute",
-    creator: "0xE0344b50970236A94FbaF49e85c5ebC4294E0072",
-    worker: "0x64a71a50Fb8A1C34E69714EAab9Db9a2c54e8Ac8", // @solidity_samurai
-    amount: "1,000",
-    token: "USDT",
-    disputeReason:
-      "Client questioned gas optimization logs for hot storage slots. Community Jurors (@evm_auditor & @parallel_hustler) reviewed Foundry traces and voted 2-0 to release funds to the worker.",
-    deliverableUri: "https://github.com/monad-developers/parallel-benchmark-suite/pull/42",
-    workerVotes: 2,
-    clientVotes: 0,
-    totalJurorsNeeded: 2,
-    hoursElapsed: 42,
-    status: "RESOLVED",
-    resolutionOutcome: "Settled in favor of Worker (100% Payout Released on Monad Testnet)",
-    recentTxHash: seededOnchainData.disputes[0]?.resolutionTx || "0x1fae8417c21418ffab6314bbbae355eaf99be494958126db58e879bad627c493",
-  },
-  {
-    id: "disp-29",
-    gigId: "29",
-    gigTitle: "Alchemy Multi-Transport Failover & Latency Monitor",
-    creator: "0xE0344b50970236A94FbaF49e85c5ebC4294E0072",
-    worker: "0xDd99eA991efBd3248150727f5e8602c85058E0B2", // @monad_vanguard
-    amount: "1,200",
-    token: "USDT",
-    disputeReason:
-      "Client went silent after final deliverable submitted 74 hours ago. Worker is invoking 72h anti-ghosting auto-release protocol.",
-    deliverableUri: "https://github.com/alchemyplatform/monad-failover-sdk/pull/18",
-    workerVotes: 0,
-    clientVotes: 0,
-    totalJurorsNeeded: 2,
-    hoursElapsed: 74,
-    status: "AUTO_RELEASE_ELIGIBLE",
-    recentTxHash: seededOnchainData.completedGigs[1]?.submitTx || "0x3dd79c2358267146674c85639504ed8bfdd95d79da173f21051475336d3b0312",
-  },
-];
-
 export function CommunityTribunalModal({
   isOpen,
   onClose,
   onTriggerToast,
   currentUserAddress,
 }: CommunityTribunalModalProps) {
-  const [disputes, setDisputes] = useState<DisputeItem[]>(SEED_DISPUTES);
-  const [selectedDispute, setSelectedDispute] = useState<DisputeItem | null>(SEED_DISPUTES[0]);
+  const [disputes, setDisputes] = useState<DisputeItem[]>([]);
+  const [selectedDispute, setSelectedDispute] = useState<DisputeItem | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState<"ACTIVE" | "RULES">("ACTIVE");
   const [isLiveTribunalSynced, setIsLiveTribunalSynced] = useState(false);
@@ -110,7 +69,7 @@ export function CommunityTribunalModal({
         const live = await fetchLiveDisputes();
         if (active && live && live.length > 0) {
           setDisputes(live);
-          setSelectedDispute(live[0]);
+          setSelectedDispute((prev) => prev || live[0]);
           setIsLiveTribunalSynced(true);
         }
       } catch (err) {
@@ -120,8 +79,12 @@ export function CommunityTribunalModal({
     if (isOpen) {
       loadDisputes();
     }
+    const interval = setInterval(() => {
+      if (isOpen) loadDisputes();
+    }, 15_000);
     return () => {
       active = false;
+      clearInterval(interval);
     };
   }, [isOpen]);
 
@@ -328,6 +291,11 @@ export function CommunityTribunalModal({
                   <span>Status</span>
                 </div>
 
+                {disputes.length === 0 && (
+                  <div className="rounded-xl border border-white/[0.08] bg-[#0E1015]/60 p-6 text-center text-xs text-[#848B9B]">
+                    No active disputed or auto-release cases on Monad Testnet.
+                  </div>
+                )}
                 {disputes.map((d) => {
                   const isSelected = selectedDispute?.id === d.id;
                   return (

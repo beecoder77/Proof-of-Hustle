@@ -17,7 +17,6 @@ import { BuilderStarterModal } from "../components/BuilderStarterModal";
 import { HustlerLeaderboardView } from "../components/HustlerLeaderboardView";
 import { CommunityTribunalModal } from "../components/CommunityTribunalModal";
 import { TokenomicsView } from "../components/TokenomicsView";
-import { INITIAL_GIGS } from "../data/mockGigs";
 import { GigItem, SubmissionItem, ActivityItem } from "../types";
 import {
   Search,
@@ -42,33 +41,6 @@ import {
 } from "../services/onchain";
 import { fetchLiveGigs, fetchLiveBurnData } from "../services/onchainFeed";
 
-// Initial seed submissions for realism
-const INITIAL_SUBMISSIONS: Record<string, SubmissionItem[]> = {
-  "23": [
-    {
-      id: "sub-23-1",
-      gigId: "23",
-      hustler: "0x8fe5bB58832f4c7E955f230bbfB4bBfbdb6D20e7",
-      submittedAt: Date.now() - 3600 * 1000,
-      deliverableUri: "https://github.com/monad-developers/parallel-benchmark-suite/pull/42",
-      isSealed: true,
-      commitHash: "0x8f3c7a9e1024bd58102837bcde81940a23bc8910482910495810294819204812",
-      isWinner: true,
-    },
-  ],
-  "24": [
-    {
-      id: "sub-24-1",
-      gigId: "24",
-      hustler: "0xDd99eA991efBd3248150727f5e8602c85058E0B2",
-      submittedAt: Date.now() - 7200 * 1000,
-      deliverableUri: "https://github.com/alchemyplatform/monad-failover-sdk/pull/18",
-      isSealed: false,
-      isWinner: true,
-    },
-  ],
-};
-
 export default function Home() {
   const { user, login } = usePrivy();
   const connectedAddress = user?.wallet?.address;
@@ -79,8 +51,8 @@ export default function Home() {
   // Client Mount & Deterministic Hydration
   const [isMounted, setIsMounted] = useState(false);
   const [currentUsername, setCurrentUsername] = useState<string>("");
-  const [gigs, setGigs] = useState<GigItem[]>(INITIAL_GIGS);
-  const [submissions, setSubmissions] = useState<Record<string, SubmissionItem[]>>(INITIAL_SUBMISSIONS);
+  const [gigs, setGigs] = useState<GigItem[]>([]);
+  const [submissions, setSubmissions] = useState<Record<string, SubmissionItem[]>>({});
   const [activities, setActivities] = useState<ActivityItem[]>([]);
 
   // Sync username from connected address or onchain storage
@@ -102,6 +74,7 @@ export default function Home() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isMeraDrawerOpen, setIsMeraDrawerOpen] = useState(false);
   const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
+  const [isTribunalOpen, setIsTribunalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
   const [sealedSubmissionData, setSealedSubmissionData] = useState<{
@@ -120,7 +93,7 @@ export default function Home() {
     title: "",
     amount: "",
     token: "",
-    txHash: "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
+    txHash: undefined,
   });
 
   // Sub-second Monad Transaction Toast Notification
@@ -188,7 +161,7 @@ export default function Home() {
   }, [activities, isMounted]);
 
   // Live onchain state from Monad Testnet contracts
-  const [totalBurnedCount, setTotalBurnedCount] = useState<string>("769");
+  const [totalBurnedCount, setTotalBurnedCount] = useState<string>("0");
   const [isLiveOnchain, setIsLiveOnchain] = useState(false);
 
   // Poll live onchain feed directly from Monad Testnet contracts
@@ -680,16 +653,6 @@ export default function Home() {
             }}
           />
         )}
-        {activeNavTab === "tribunal" && (
-          <div className="py-2">
-            <CommunityTribunalModal
-              isOpen={true}
-              onClose={() => setActiveNavTab("explore")}
-              onTriggerToast={triggerTxToast}
-              currentUserAddress={currentUserAddress}
-            />
-          </div>
-        )}
         {activeNavTab === "burn" && (
           <BurnTrackerWidget
             currentUserAddress={connectedAddress}
@@ -856,7 +819,7 @@ export default function Home() {
                 : "Dispute recorded on Monad Testnet.",
               res.txHash
             );
-            setActiveNavTab("tribunal");
+            setIsTribunalOpen(true);
             setSelectedGig(null);
           } catch (e: any) {
             console.error("Raise dispute error", e);
@@ -914,6 +877,14 @@ export default function Home() {
         txHash={proofOfWinData.txHash}
       />
 
+      {/* Community Dispute Tribunal Modal */}
+      <CommunityTribunalModal
+        isOpen={isTribunalOpen}
+        onClose={() => setIsTribunalOpen(false)}
+        onTriggerToast={triggerTxToast}
+        currentUserAddress={currentUserAddress}
+      />
+
       {/* Minimalist Studio Footer */}
       <footer className="mt-auto border-t border-white/[0.06] bg-[#0E1015] py-6 text-center text-xs text-[#848B9B]">
         <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -921,7 +892,7 @@ export default function Home() {
             <span className="font-bold text-white">ProofOfHustle</span>
             <span>• Built natively on Monad</span>
           </div>
-          <div className="flex items-center gap-4 text-[11px]">
+          <div className="flex items-center gap-4 text-[11px] flex-wrap justify-center">
             <span>Monad Testnet (Chain ID 10143)</span>
             <a
               href="https://testnet.monadscan.com"
@@ -931,6 +902,12 @@ export default function Home() {
             >
               MonadVision Explorer
             </a>
+            <button
+              onClick={() => setIsTribunalOpen(true)}
+              className="hover:text-[#F9FAFB] transition-colors text-[#848B9B]"
+            >
+              Dispute Tribunal
+            </button>
             <span>Alchemy High-Speed Transport</span>
           </div>
         </div>

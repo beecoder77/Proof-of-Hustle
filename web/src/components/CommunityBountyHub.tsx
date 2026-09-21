@@ -18,7 +18,6 @@ import {
   Gift,
 } from "lucide-react";
 import { CONTRACTS } from "../config/contracts";
-import seededOnchainData from "../data/seededOnchainData.json";
 import {
   stakeHypeOnchain,
   createGigOnchain,
@@ -42,84 +41,6 @@ interface CommunityBounty {
   recentTxHash?: string;
 }
 
-const ONCHAIN_BOUNTIES: CommunityBounty[] = [
-  {
-    id: "b1",
-    gigId: "23",
-    title: seededOnchainData.completedGigs[0]?.title || "Parallel EVM Storage Slot Collision Benchmark Suite",
-    description:
-      "Community-pooled bounty to stress test concurrent storage slot conflicts, measuring throughput and abort/retry latency on Monad parallel execution.",
-    targetGoal: 2500,
-    currentRaised: 2500,
-    currency: "USDT",
-    hypeStaked: 150,
-    backersCount: 29,
-    daysRemaining: 6,
-    tags: ["Solidity", "Parallel EVM", "Foundry"],
-    recentTxHash: seededOnchainData.completedGigs[0]?.payoutTx || "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
-  },
-  {
-    id: "b2",
-    gigId: "24",
-    title: seededOnchainData.completedGigs[1]?.title || "Alchemy Multi-Transport Failover & Latency Monitor",
-    description:
-      "High-performance TypeScript RPC client that monitors block latency on Monad testnet and seamlessly fails over to backup RPCs under 100ms.",
-    targetGoal: 1200,
-    currentRaised: 1200,
-    currency: "USDT",
-    hypeStaked: 184,
-    backersCount: 16,
-    daysRemaining: 3,
-    tags: ["TypeScript", "Viem", "Alchemy"],
-    recentTxHash: seededOnchainData.completedGigs[1]?.payoutTx || "0xafc8d609315d0052a556d1ae9d9bb541da2673796ec267684a3d12d0f7224e63",
-  },
-  {
-    id: "b3",
-    gigId: "25",
-    title: seededOnchainData.completedGigs[2]?.title || "MERA PRF Biometric Key Derivation Test Suite",
-    description:
-      "Deterministic WebAuthn passkey PRF extension client deriving unique entropy for sealed escrow deliverables on Monad Testnet.",
-    targetGoal: 1500,
-    currentRaised: 1500,
-    currency: "USDT",
-    hypeStaked: 220,
-    backersCount: 22,
-    daysRemaining: 4,
-    tags: ["Cryptography", "Mera PRF", "WebAuthn"],
-    recentTxHash: seededOnchainData.completedGigs[2]?.payoutTx || "0x79c318b90ad0d6f8a0669dd83f8cfe062d5a601df34e1891a8f160115a65b5c1",
-  },
-  {
-    id: "b4",
-    gigId: "26",
-    title: seededOnchainData.completedGigs[3]?.title || "Monad Gas Tuning & Cold Storage Benchmark",
-    description:
-      "Foundry benchmark evaluating Monad testnet gas schedules, warm vs cold slot reads, and scheduler abort frequencies.",
-    targetGoal: 1000,
-    currentRaised: 1000,
-    currency: "USDT",
-    hypeStaked: 160,
-    backersCount: 19,
-    daysRemaining: 5,
-    tags: ["Gas", "Storage", "Solidity"],
-    recentTxHash: seededOnchainData.completedGigs[3]?.payoutTx || "0xd197f8545d9485a8d167907228cac2a9d74b4a7ee7560643c8cfa9297209ee73",
-  },
-  {
-    id: "b5",
-    gigId: "27",
-    title: seededOnchainData.completedGigs[4]?.title || "Monad 3D Animated Video Meme & Sticker Collection",
-    description:
-      "Community-pooled bounty to commission high-energy 3D animation assets and sticker loops celebrating Monad's 400ms block finality.",
-    targetGoal: 800,
-    currentRaised: 800,
-    currency: "USDT",
-    hypeStaked: 350,
-    backersCount: 38,
-    daysRemaining: 7,
-    tags: ["Community", "Animation", "Memes"],
-    recentTxHash: seededOnchainData.completedGigs[4]?.payoutTx || "0x4cdf582a277fa81d65481e02753b34503ac9c6ceba1bd3597e5e7add1c8f75eb",
-  },
-];
-
 interface UserCurationPosition {
   gigId: string;
   gigTitle: string;
@@ -136,40 +57,17 @@ interface CommunityBountyHubProps {
   currentUserAddress?: string;
 }
 
-const INITIAL_CURATIONS: UserCurationPosition[] = [
-  {
-    gigId: "23",
-    gigTitle: seededOnchainData.completedGigs[0]?.title || "Parallel EVM Storage Slot Collision Benchmark Suite",
-    stakedAmount: 50,
-    earlyRank: 1,
-    claimableYieldUsdt: 2.50,
-    isSettled: true,
-    isClaimed: false,
-    txHash: seededOnchainData.completedGigs[0]?.hypeTx || "0x4151539e8afa03ee467d6f1ab02300715a0db5da3a0b2b9aad542932c95d5749",
-  },
-  {
-    gigId: "24",
-    gigTitle: seededOnchainData.completedGigs[1]?.title || "Alchemy Multi-Transport Failover & Latency Monitor",
-    stakedAmount: 50,
-    earlyRank: 1,
-    claimableYieldUsdt: 1.20,
-    isSettled: true,
-    isClaimed: false,
-    txHash: seededOnchainData.completedGigs[1]?.hypeTx || "0x056f66b90357a9bfa560bab7d8446d40c26e0e818b703b9624ca555dca664532",
-  },
-];
-
 export function CommunityBountyHub({
   onTriggerToast,
   currentUserAddress,
 }: CommunityBountyHubProps = {}) {
-  const [bounties, setBounties] = useState<CommunityBounty[]>(ONCHAIN_BOUNTIES);
+  const [bounties, setBounties] = useState<CommunityBounty[]>([]);
   const [pledgeAmount, setPledgeAmount] = useState("50");
   const [activeBountyId, setActiveBountyId] = useState<string | null>(null);
   const [isStaking, setIsStaking] = useState(false);
   const [confirmedTx, setConfirmedTx] = useState<{ [id: string]: string }>({});
   const [stakeError, setStakeError] = useState<{ [id: string]: string }>({});
-  const [curations, setCurations] = useState<UserCurationPosition[]>(INITIAL_CURATIONS);
+  const [curations, setCurations] = useState<UserCurationPosition[]>([]);
   const [isClaimingYield, setIsClaimingYield] = useState<{ [gigId: string]: boolean }>({});
   const [isUnstaking, setIsUnstaking] = useState<{ [gigId: string]: boolean }>({});
 
@@ -447,16 +345,19 @@ export function CommunityBountyHub({
         </div>
 
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {curations.map((cur) => (
+          {curations.length === 0 ? (
+            <div className="col-span-full py-6 text-center text-xs text-[#848B9B]">
+              No active curation stakes yet. Stake $HUSTLE on open bounties below to curate and earn 20% protocol yield!
+            </div>
+          ) : (
+            curations.map((cur) => (
             <div
               key={cur.gigId}
-              className="rounded-xl border border-white/[0.08] bg-[#0E1015]/70 p-4 flex flex-col justify-between gap-3"
+              className="rounded-xl border border-white/[0.08] bg-[#1B1E2B]/80 p-4 space-y-3"
             >
               <div>
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className="font-mono text-[11px] font-semibold text-[#7C5CFC]">
-                    Gig #{cur.gigId}
-                  </span>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="font-mono text-[#848B9B]">Gig #{cur.gigId}</span>
                   <div className="flex items-center gap-1.5">
                     <span className="rounded-md bg-[#7C5CFC]/15 px-2 py-0.5 text-[10px] font-semibold text-[#A78BFA] border border-[#7C5CFC]/25 font-mono">
                       Early Curator #{cur.earlyRank} of 10
@@ -508,12 +409,21 @@ export function CommunityBountyHub({
                 )}
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
       {/* Bounty Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {bounties.length === 0 && (
+          <div className="col-span-full py-12 text-center text-[#848B9B] border border-white/[0.08] rounded-xl bg-[#151821]">
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-sm font-medium text-white">Loading Live Monad Bounties...</span>
+              <span className="text-xs">Querying GigEscrow contract for active community bounties</span>
+            </div>
+          </div>
+        )}
         {bounties.map((bounty) => {
           const percent = Math.min(100, Math.round((bounty.currentRaised / bounty.targetGoal) * 100));
           const isFunded = percent >= 100;

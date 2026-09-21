@@ -378,43 +378,7 @@ export function HustlerProfileView({
     }
   };
 
-  const FALLBACK_BADGES: OnchainBadge[] = [
-    {
-      id: "1",
-      title: "Parallel EVM Storage Slot Collision Benchmark Suite",
-      amount: "2,500 USDT",
-      rating: 5,
-      date: "Sep 2026",
-      txHash: "0xd79166346457375455b5248724aec65307d307e2e33778d69d8e726beb843f5e",
-      sbtTokenId: "1",
-      gigId: "23",
-      deliverableCid: "bafybeigig_1789912046768_parallel_evm",
-    },
-    {
-      id: "2",
-      title: "Alchemy Multi-Transport Failover & Latency Monitor",
-      amount: "1,200 USDT",
-      rating: 5,
-      date: "Sep 2026",
-      txHash: "0xafc8d609315d0052a556d1ae9d9bb541da2673796ec267684a3d12d0f7224e63",
-      sbtTokenId: "2",
-      gigId: "24",
-      deliverableCid: "bafybeigig_1789912046768_alchemy_failover",
-    },
-    {
-      id: "3",
-      title: "MERA PRF Biometric Key Derivation Test Suite",
-      amount: "1,500 USDT",
-      rating: 5,
-      date: "Sep 2026",
-      txHash: "0x79c318b90ad0d6f8a0669dd83f8cfe062d5a601df34e1891a8f160115a65b5c1",
-      sbtTokenId: "3",
-      gigId: "25",
-      deliverableCid: "bafybeigig_1789912046768_mera_prf",
-    },
-  ];
-
-  const [badges, setBadges] = useState<OnchainBadge[]>(FALLBACK_BADGES);
+  const [badges, setBadges] = useState<OnchainBadge[]>([]);
   const [isOnchainSbtLoaded, setIsOnchainSbtLoaded] = useState(false);
 
   useEffect(() => {
@@ -437,13 +401,15 @@ export function HustlerProfileView({
     };
   }, [currentUserAddress]);
 
-  const builderLevel = Math.min(5, Math.max(1, badges.length));
+  const builderLevel = badges.length;
   const builderTier =
     builderLevel >= 4
       ? "Grandmaster Craftsman"
       : builderLevel >= 2
       ? "Master Craftsman Tier"
-      : "Apprentice Builder";
+      : builderLevel >= 1
+      ? "Verified Builder"
+      : "Unverified Hustler";
 
   return (
     <div className="space-y-6">
@@ -551,7 +517,7 @@ export function HustlerProfileView({
                 </span>
                 <span>•</span>
                 <span className="text-[#A78BFA]">
-                  {isOnchainSbtLoaded ? `${badges.length} SBT Credentials` : "Founding Scout #4"}
+                  {badges.length > 0 ? `${badges.length} SBT Credentials` : "Active Hustler"}
                 </span>
                 <span>•</span>
                 <span className="text-[#34D399]">Devnads Verified</span>
@@ -572,85 +538,67 @@ export function HustlerProfileView({
                 ) : (
                   <Coins className="h-3.5 w-3.5" />
                 )}
-                <span>{isMintingUsdt ? "Minting Onchain..." : "+1,000 Mock USDT"}</span>
+                <span>Claim 500 USDT Faucet</span>
               </button>
 
               <button
                 onClick={handleClaimHustleAirdrop}
                 disabled={isClaimingHustle}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-[#7C5CFC]/30 bg-[#7C5CFC]/15 px-3.5 py-2 text-xs font-semibold text-[#A78BFA] hover:bg-[#7C5CFC]/25 active:scale-[0.98] transition-all disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-purple-500/30 bg-purple-500/10 px-3.5 py-2 text-xs font-semibold text-[#A78BFA] hover:bg-purple-500/20 active:scale-[0.98] transition-all disabled:opacity-50"
               >
                 {isClaimingHustle ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Zap className="h-3.5 w-3.5" />
+                  <Sparkles className="h-3.5 w-3.5" />
                 )}
-                <span>{isClaimingHustle ? "Transferring Onchain..." : "+500 $HUSTLE Airdrop"}</span>
+                <span>+500 $HUSTLE Airdrop</span>
               </button>
             </div>
-          ) : (
-            <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#1B1E2B] px-3.5 py-2 text-xs text-[#848B9B]">
-              <Shield className="h-3.5 w-3.5 text-[#7C5CFC]" />
-              <span>Monad Testnet Onchain Record</span>
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
 
-      {/* Live Onchain Balances Matrix */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* HUSTLE Token Card */}
-        <div className="rounded-2xl border border-[#7C5CFC]/30 bg-gradient-to-br from-[#1B1730] to-[#151821] p-5 shadow-lg relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#A78BFA] flex items-center gap-1.5">
-              <Zap className="h-4 w-4 text-[#7C5CFC]" />
-              $HUSTLE Balance
-            </span>
-            <button
-              onClick={fetchOnchainBalances}
-              title="Refresh balances"
-              className="rounded p-1 text-[#848B9B] hover:text-white active:scale-[0.95]"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${isLoadingBalances ? "animate-spin" : ""}`} />
-            </button>
+      {/* Primary Financial Stats Ribbon */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="rounded-2xl border border-white/[0.08] bg-[#151821] p-4 sm:p-5 shadow-lg">
+          <div className="flex items-center justify-between text-[#848B9B]">
+            <span className="text-xs uppercase tracking-wider font-medium">Earned Balance</span>
+            <Coins className="h-4 w-4 text-[#34D399]" />
           </div>
-          <span className="mt-2 block font-mono text-2xl sm:text-3xl font-extrabold text-white tabular-numbers">
-            {hustleBalance}
+          <span className="mt-2 font-mono text-xl sm:text-2xl font-black text-[#F9FAFB] block">
+            {usdtBalance} USDT
           </span>
-          <p className="mt-1 text-[11px] text-[#9CA3AF]">
-            Used for Attention Futures Hype staking & protocol deflationary burns
-          </p>
+          <p className="mt-1 text-[11px] text-[#9CA3AF]">Escrow rewards settled directly via MockUSDT.</p>
         </div>
 
-        {/* USDT Settlement Card */}
-        <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-[#13251D] to-[#151821] p-5 shadow-lg relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#34D399] flex items-center gap-1.5">
-              <Coins className="h-4 w-4" />
-              Mock USDT Balance
-            </span>
-            <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/15 px-1.5 py-0.5 rounded">
-              Escrow Collateral
-            </span>
+        <div className="rounded-2xl border border-white/[0.08] bg-[#151821] p-4 sm:p-5 shadow-lg">
+          <div className="flex items-center justify-between text-[#848B9B]">
+            <span className="text-xs uppercase tracking-wider font-medium">Staked Power</span>
+            <Zap className="h-4 w-4 text-[#7C5CFC]" />
           </div>
-          <span className="mt-2 block font-mono text-2xl sm:text-3xl font-extrabold text-[#34D399] tabular-numbers">
-            ${usdtBalance}
+          <span className="mt-2 font-mono text-xl sm:text-2xl font-black text-[#F9FAFB] block">
+            {hustleBalance} $HUSTLE
           </span>
-          <p className="mt-1 text-[11px] text-[#9CA3AF]">Available settlement funds for posting and funding gig bounties.</p>
+          <p className="mt-1 text-[11px] text-[#9CA3AF]">Ecosystem governance & staking tier token.</p>
         </div>
 
-        {/* Native MON Gas Card */}
-        <div className="rounded-2xl border border-white/[0.08] bg-[#151821] p-5 shadow-lg">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#848B9B] flex items-center gap-1.5">
-              <Wallet className="h-4 w-4 text-[#FBBF24]" />
-              Monad Gas (MON)
-            </span>
-            <span className="text-[10px] font-mono text-[#FBBF24] bg-[#F59E0B]/15 px-1.5 py-0.5 rounded">
-              Chain 10143
-            </span>
+        <div className="rounded-2xl border border-white/[0.08] bg-[#151821] p-4 sm:p-5 shadow-lg">
+          <div className="flex items-center justify-between text-[#848B9B]">
+            <span className="text-xs uppercase tracking-wider font-medium">Reputation Credentials</span>
+            <Star className="h-4 w-4 text-[#FBBF24]" />
           </div>
-          <span className="mt-2 block font-mono text-2xl sm:text-3xl font-extrabold text-[#F9FAFB] tabular-numbers">
+          <span className="mt-2 font-mono text-xl sm:text-2xl font-black text-[#F9FAFB] block">
+            {badges.length} Proofs
+          </span>
+          <p className="mt-1 text-[11px] text-[#9CA3AF]">Verified ERC-5192 Soulbound tokens held onchain.</p>
+        </div>
+
+        <div className="rounded-2xl border border-white/[0.08] bg-[#151821] p-4 sm:p-5 shadow-lg">
+          <div className="flex items-center justify-between text-[#848B9B]">
+            <span className="text-xs uppercase tracking-wider font-medium">Monad Gas Reserve</span>
+            <Wallet className="h-4 w-4 text-[#60A5FA]" />
+          </div>
+          <span className="mt-2 font-mono text-xl sm:text-2xl font-black text-[#F9FAFB] block">
             {monBalance} MON
           </span>
           <p className="mt-1 text-[11px] text-[#9CA3AF]">Gas balance for sub-second Monad transactions (~0.0001 MON/tx).</p>
@@ -673,47 +621,57 @@ export function HustlerProfileView({
           </span>
         </div>
 
-        <div className="mt-4 space-y-3">
-          {badges.map((b) => (
-            <div
-              key={b.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-white/[0.06] bg-[#1B1E2B] p-4 text-xs hover:border-white/[0.12] transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30">
-                  <ShieldCheck className="h-5 w-5" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-white text-sm">{b.title}</h4>
-                  <div className="flex items-center gap-2 text-[#848B9B] mt-0.5 flex-wrap">
-                    <span className="font-mono text-[#A78BFA]">SBT #{b.sbtTokenId}</span>
-                    <span>•</span>
-                    <span>Completed {b.date}</span>
-                    <span>•</span>
-                    <span className="text-[#34D399] font-medium">Verified by Client</span>
+        {badges.length === 0 ? (
+          <div className="mt-4 rounded-xl border border-white/[0.06] bg-[#1B1E2B]/50 p-8 text-center">
+            <ShieldCheck className="mx-auto h-8 w-8 text-[#848B9B]/50 mb-2" />
+            <p className="text-sm font-medium text-white">No Soulbound Credentials Minted Yet</p>
+            <p className="text-xs text-[#848B9B] mt-1 max-w-sm mx-auto">
+              Complete gigs and receive escrow payout approvals to earn non-transferable ERC-5192 SBT reputation credentials onchain.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {badges.map((b) => (
+              <div
+                key={b.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-white/[0.06] bg-[#1B1E2B] p-4 text-xs hover:border-white/[0.12] transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#7C5CFC]/15 text-[#7C5CFC] border border-[#7C5CFC]/30">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white text-sm">{b.title}</h4>
+                    <div className="flex items-center gap-2 text-[#848B9B] mt-0.5 flex-wrap">
+                      <span className="font-mono text-[#A78BFA]">SBT #{b.sbtTokenId}</span>
+                      <span>•</span>
+                      <span>Completed {b.date}</span>
+                      <span>•</span>
+                      <span className="text-[#34D399] font-medium">Verified by Client</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0">
-                <div className="text-left sm:text-right">
-                  <span className="font-mono font-bold text-[#34D399] block">{b.amount}</span>
-                  <span className="text-[#FBBF24] text-[11px]">{b.rating} / 5 Stars</span>
+                <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0">
+                  <div className="text-left sm:text-right">
+                    <span className="font-mono font-bold text-[#34D399] block">{b.amount}</span>
+                    <span className="text-[#FBBF24] text-[11px]">{b.rating} / 5 Stars</span>
+                  </div>
+                  <a
+                    href={b.txHash && b.txHash !== "0x" ? `https://testnet.monadscan.com/tx/${b.txHash}` : `https://testnet.monadscan.com/token/${CONTRACTS.proofOfHustleSBT.address}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Verify on MonadScan"
+                    className="flex items-center gap-1 rounded-lg border border-white/[0.1] bg-[#151821] px-2.5 py-1.5 text-xs text-[#9CA3AF] hover:text-white hover:border-[#7C5CFC] transition-colors"
+                  >
+                    <span>Verify</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
                 </div>
-                <a
-                  href={`https://testnet.monadscan.com/tx/${b.txHash}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  title="Verify on MonadScan"
-                  className="flex items-center gap-1 rounded-lg border border-white/[0.1] bg-[#151821] px-2.5 py-1.5 text-xs text-[#9CA3AF] hover:text-white hover:border-[#7C5CFC] transition-colors"
-                >
-                  <span>Verify</span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Real Onchain Transaction History */}
