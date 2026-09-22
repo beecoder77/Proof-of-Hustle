@@ -58,6 +58,7 @@ export function Navbar({
   const navItems = [
     { id: "explore", label: "Explore Gigs", icon: Compass },
     { id: "community", label: "Bounties & Yield", icon: Zap },
+    { id: "tribunal", label: "Court of Hustle", icon: Scale },
     { id: "leaderboard", label: "Hall of Fame", icon: Trophy },
     { id: "tokenomics", label: "Tokenomics", icon: Coins },
     { id: "burn", label: "Burn Flywheel", icon: Flame },
@@ -404,6 +405,8 @@ export function Navbar({
                     ? "Explore"
                     : item.id === "community"
                     ? "Bounties"
+                    : item.id === "tribunal"
+                    ? "Court"
                     : item.id === "leaderboard"
                     ? "Fame"
                     : item.id === "tokenomics"

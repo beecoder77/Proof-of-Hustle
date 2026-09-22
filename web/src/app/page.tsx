@@ -16,6 +16,7 @@ import { ProofOfWinModal } from "../components/ProofOfWinModal";
 import { BuilderStarterModal } from "../components/BuilderStarterModal";
 import { HustlerLeaderboardView } from "../components/HustlerLeaderboardView";
 import { CommunityTribunalModal } from "../components/CommunityTribunalModal";
+import { TribunalCourtView } from "../components/TribunalCourtView";
 import { TokenomicsView } from "../components/TokenomicsView";
 import { GigDetailView } from "../components/GigDetailView";
 import { GigItem, SubmissionItem, ActivityItem } from "../types";
@@ -771,6 +772,19 @@ export default function Home() {
                 currentUserAddress={currentUserAddress}
               />
             )}
+            {activeNavTab === "tribunal" && (
+              <TribunalCourtView
+                currentUserAddress={currentUserAddress}
+                onTriggerToast={triggerTxToast}
+                onNavigateToGig={(id) => {
+                  const target = gigs.find((g) => g.id === id);
+                  if (target) {
+                    setSelectedGig(target);
+                    updateGigUrl(id);
+                  }
+                }}
+              />
+            )}
             {activeNavTab === "leaderboard" && (
               <HustlerLeaderboardView
                 onSelectUser={(address) => {
@@ -1006,10 +1020,10 @@ export default function Home() {
               MonadVision Explorer
             </a>
             <button
-              onClick={() => setIsTribunalOpen(true)}
+              onClick={() => setActiveNavTab("tribunal")}
               className="hover:text-[#F9FAFB] transition-colors text-[#848B9B]"
             >
-              Dispute Tribunal
+              Court of Hustle
             </button>
             <span>Alchemy High-Speed Transport</span>
           </div>
