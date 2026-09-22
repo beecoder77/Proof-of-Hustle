@@ -298,15 +298,25 @@ export function TokenomicsView() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
             <a
-              href={`https://testnet.kuru.io/trade/${CONTRACTS.hustleToken.address}`}
+              href="https://kuru.io"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7C5CFC] to-[#9073FD] px-5 py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-[#7C5CFC]/25 hover:opacity-95 active:scale-[0.98] transition-all"
             >
-              <span>Trade $HUSTLE on Kuru</span>
+              <span>Launch Kuru DEX (kuru.io)</span>
               <ExternalLink className="h-4 w-4" />
+            </a>
+
+            <a
+              href="https://docs.kuru.io/contracts/Contract-addresses"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-xs sm:text-sm font-semibold text-[#848B9B] hover:text-white hover:bg-white/[0.08] active:scale-[0.98] transition-all"
+            >
+              <FileText className="h-4 w-4 text-[#7C5CFC]" />
+              <span>Kuru Docs &amp; Testnet Contracts</span>
             </a>
           </div>
         </div>
